@@ -123,6 +123,8 @@ namespace LogReader_WPF
 
                 LogFileLocation.Text = files[0];
 
+                //WTF
+
                 OpenFileLog();
 
 
