@@ -130,5 +130,12 @@ namespace LogReader_WPF
 
             }
         }
+
+        private void OpenAbout(object sender, RoutedEventArgs e)
+        {
+            About about = new About();
+            about.Owner = this;
+            var resutls = about.ShowDialog();
+        }
     }
 }
