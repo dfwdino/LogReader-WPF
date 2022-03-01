@@ -10,7 +10,8 @@
         <Label Content="Github:" HorizontalAlignment="Left" Margin="10,39,0,0" VerticalAlignment="Top"/>
         <Label Content="Version:" HorizontalAlignment="Left" Margin="10,74,0,0" VerticalAlignment="Top"/>
 
-        <TextBlock HorizontalAlignment="Left" Margin="66,44,0,0" TextWrapping="Wrap" Text="https://github.com/dfwdino/LogReader-WPF" VerticalAlignment="Top"/>
+        <TextBlock Name="ProjectURL" HorizontalAlignment="Left" Margin="66,44,0,0" TextWrapping="Wrap" Text="https://github.com/dfwdino/LogReader-WPF" VerticalAlignment="Top" 
+                   MouseDown="ProjectURL_MouseDown"/>
         <TextBlock HorizontalAlignment="Left" Margin="67,79,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" x:Name="VersionNumber"/>
 
         <Button Content="Close" HorizontalAlignment="Left" Margin="16,111,0,0" VerticalAlignment="Top" Click="Close_Clicked"/>

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -33,6 +34,15 @@ namespace LogReader_WPF
         private void Close_Clicked(object sender, RoutedEventArgs e)
         {
             this.Close();
+        }
+
+        private void ProjectURL_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            System.Diagnostics.Process.Start(new ProcessStartInfo
+            {
+                FileName = ProjectURL.Text,
+                UseShellExecute = true
+            });
         }
     }
 }
