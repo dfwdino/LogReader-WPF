@@ -31,8 +31,8 @@ namespace LogReader_WPF
             InitializeComponent();
         }
 
-        
-        private async void OpenLogFile_Click(object sender, RoutedEventArgs e)
+
+        private void OpenLogFile_Click(object sender, RoutedEventArgs e)
         {
             LogFileLocation.Text = FIleIO.OpenFileDialog();
             LogFileData.Items.Clear();
@@ -49,9 +49,9 @@ namespace LogReader_WPF
             OpenFileLog();
         }
 
-        private async void OpenFileLog()
+        private void OpenFileLog()
         {
-            
+
             System.IO.StreamReader myFile = null;
 
             try
@@ -63,12 +63,15 @@ namespace LogReader_WPF
                 MessageBox.Show($"Error {ex.Message}");
                 return;
             }
-            
-            
-            
+
+
+
             string myString = myFile.ReadToEnd();
 
             myFile.Close();
+
+            LogFileData.Items.Clear();
+
 
             foreach (var item in myString.Split(Environment.NewLine))
             {
@@ -94,24 +97,26 @@ namespace LogReader_WPF
 
         private SolidColorBrush GetRowColor(string data)
         {
-            if (data.IndexOf("Error", StringComparison.CurrentCultureIgnoreCase) > 0)
+            
+
+            if (FlagWords.ErrorWords.Any(m => data.Contains(m)))
             {
                 _ErrorNumber += 1;
-                return Brushes.Red;
+                return ErrorColors.Error;
             }
-            else if (data.IndexOf("Warning", StringComparison.CurrentCultureIgnoreCase) > 0)
+            else if (FlagWords.WarningWords.Any(m => data.Contains(m)))
             {
                 _WarningNumber += 1;
-                return Brushes.Yellow;
+                return ErrorColors.Warning;
 
             }
 
-            return Brushes.White;
+            return ErrorColors.Normal;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            this.Title = $"The Log - {Assembly.GetEntryAssembly().GetName().Version}";
+            this.Title = $"The Log - {RandomHelpers.GetCurrentVerion().ToString()}";
         }
 
         private void DataGridFile_Drop(object sender, DragEventArgs e)
@@ -136,6 +141,33 @@ namespace LogReader_WPF
             About about = new About();
             about.Owner = this;
             var resutls = about.ShowDialog();
+        }
+
+        private void SearchGrid(object sender, RoutedEventArgs e)
+        {
+            ShowAllRows();
+
+            foreach (DataGridRow dgr in LogFileData.Items)
+            {
+                if (dgr.Item.ToString().IndexOf(SearchBox.Text) < 0)
+                {
+                    dgr.Visibility = Visibility.Collapsed;
+                    
+                }
+            }
+        }
+
+        private void ClearSearch(object sender, RoutedEventArgs e)
+        {
+            ShowAllRows();
+        }
+
+        private void ShowAllRows()
+        {
+            foreach (DataGridRow dgr in LogFileData.Items)
+            {
+               dgr.Visibility = Visibility.Visible;
+            }
         }
     }
 }
