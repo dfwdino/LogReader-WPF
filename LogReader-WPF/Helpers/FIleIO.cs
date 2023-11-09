@@ -14,7 +14,6 @@ namespace LogReader_WPF
             OpenFileDialog openFileDialog = new OpenFileDialog();
 
             return openFileDialog.ShowDialog() == true ? openFileDialog.FileName : string.Empty;
-
         }
     }
 }

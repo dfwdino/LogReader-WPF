@@ -7,6 +7,8 @@ namespace LogReader_WPF
         public static SolidColorBrush Error => Brushes.Red;
         public static SolidColorBrush Warning => Brushes.Yellow;
 
-        public static SolidColorBrush Normal => Brushes.White;
+        public static SolidColorBrush EvenRowColor => Brushes.White;
+
+        public static SolidColorBrush OddRowColor => Brushes.FloralWhite;
     }
 }

@@ -38,11 +38,9 @@ namespace LogReader_WPF
 
         private void ProjectURL_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            System.Diagnostics.Process.Start(new ProcessStartInfo
-            {
-                FileName = ProjectURL.Text,
-                UseShellExecute = true
-            });
+            System.Diagnostics.Process.Start(
+                new ProcessStartInfo { FileName = ProjectURL.Text, UseShellExecute = true }
+            );
         }
     }
 }

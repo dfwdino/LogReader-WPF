@@ -1,10 +1,13 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -15,6 +18,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
+using static LogReader_WPF.LogFileErrorColorModel;
 
 namespace LogReader_WPF
 {
@@ -25,55 +30,14 @@ namespace LogReader_WPF
     {
         private int _ErrorNumber = 0;
         private int _WarningNumber = 0;
+        private bool OddRow = false;
+        private LogFileErrorColorModel AppErrorColors;
 
-        public MainWindow()
+        public delegate void AddTextToRowCallback(string message);
+
+        private void AddTextToRow(string message)
         {
-            InitializeComponent();
-        }
-
-
-        private void OpenLogFile_Click(object sender, RoutedEventArgs e)
-        {
-            LogFileLocation.Text = FIleIO.OpenFileDialog();
-            LogFileData.Items.Clear();
-            StatusBar.Text = $"Loading file {LogFileLocation.Text}.";
-
-            WarningNumber.Text = _WarningNumber.ToString();
-            ErrorNumber.Text = _ErrorNumber.ToString();
-
-            //await Task.Run(() =>
-            //{
-            //    OpenFileLog();
-            //});
-
-            OpenFileLog();
-        }
-
-        private void OpenFileLog()
-        {
-
-            System.IO.StreamReader myFile = null;
-
-            try
-            {
-                myFile = new System.IO.StreamReader(LogFileLocation.Text);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error {ex.Message}");
-                return;
-            }
-
-
-
-            string myString = myFile.ReadToEnd();
-
-            myFile.Close();
-
-            LogFileData.Items.Clear();
-
-
-            foreach (var item in myString.Split(Environment.NewLine))
+            foreach (var item in message.Split(Environment.NewLine))
             {
                 DataGridRow dgr = new DataGridRow();
 
@@ -82,7 +46,47 @@ namespace LogReader_WPF
                 dgr.Background = GetRowColor(item);
 
                 LogFileData.Items.Add(dgr);
+
             }
+        }
+
+        public MainWindow()
+        {
+            InitializeComponent();
+        }
+
+        private async void OpenLogFile_Click(object sender, RoutedEventArgs e)
+        {
+            LogFileLocation.Text = FIleIO.OpenFileDialog();
+            LogFileData.Items.Clear();
+            StatusBar.Text = $"Loading file {LogFileLocation.Text}.";
+
+            WarningNumber.Text = _WarningNumber.ToString();
+            ErrorNumber.Text = _ErrorNumber.ToString();
+
+            OpenFileLog(LogFileLocation.Text);
+
+        }
+
+
+
+        private void LoadDataGrid(string filedata)
+        {
+            LogFileData.Items.Clear();
+
+            Application.Current.Dispatcher.Invoke(DispatcherPriority.Background, new Action(delegate () { AddTextToRow(filedata); }));
+
+            //foreach (var item in filedata.Split(Environment.NewLine))
+            //{
+            //    DataGridRow dgr = new DataGridRow();
+
+            //    dgr.Item = item;
+
+            //    dgr.Background = GetRowColor(item);
+
+            //    LogFileData.Items.Add(dgr);
+                
+            //}
 
             StatusBar.Text = $"Log file loaded {LogFileLocation.Text}.";
 
@@ -91,32 +95,93 @@ namespace LogReader_WPF
 
             _ErrorNumber = 0;
             _WarningNumber = 0;
+        }
+
+        private void OpenFileLog(string logfilelocation)
+        {
+            System.IO.StreamReader myFile = null;
+
+            try
+            {
+                myFile = new System.IO.StreamReader(logfilelocation);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error {ex.Message}");
+                return;
+            }
+
+            string myString = myFile.ReadToEnd();
+
+            myFile.Close();
+
+            LoadDataGrid(myString);
 
         }
 
-
         private SolidColorBrush GetRowColor(string data)
         {
-            
-
-            if (FlagWords.ErrorWords.Any(m => data.Contains(m)))
+            //There has to be a better and faster way.
+            foreach (var errorcolor in AppErrorColors.ErrorColors)
             {
-                _ErrorNumber += 1;
-                return ErrorColors.Error;
+                if (data.Contains(errorcolor.ErrorName))
+                {
+                    try
+                    {
+                        switch (errorcolor.ErrorName)
+                        {
+                            case "Error":
+                                _ErrorNumber++;
+                                break;
+
+                            case "Warning":
+                                _WarningNumber++;
+                                break;
+
+                            default:
+                                break;
+                        }
+
+                        return new SolidColorBrush(
+                            (Color)ColorConverter.ConvertFromString(errorcolor.ErrorColor)
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        return new SolidColorBrush(
+                            (Color)ColorConverter.ConvertFromString("Error")
+                        );
+                    }
+                }
             }
-            else if (FlagWords.WarningWords.Any(m => data.Contains(m)))
+
+            if (OddRow)
             {
-                _WarningNumber += 1;
-                return ErrorColors.Warning;
-
+                OddRow = false;
+                return ErrorColors.EvenRowColor;
             }
+            else
+            {
+                OddRow = true;
+                return ErrorColors.OddRowColor;
+            }
+            //}
 
-            return ErrorColors.Normal;
+            //return ErrorColors.EvenRowColor;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             this.Title = $"The Log - {RandomHelpers.GetCurrentVerion().ToString()}";
+
+            string jsonpath = System.IO.Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "AppSettings",
+                "AppSettings.json"
+            );
+            string AppSettingsJson = File.ReadAllText(jsonpath).ToString();
+
+            AppErrorColors = JsonConvert.DeserializeObject<LogFileErrorColorModel>(AppSettingsJson);
         }
 
         private void DataGridFile_Drop(object sender, DragEventArgs e)
@@ -130,9 +195,7 @@ namespace LogReader_WPF
 
                 //WTF
 
-                OpenFileLog();
-
-
+                OpenFileLog(LogFileLocation.Text);
             }
         }
 
@@ -143,7 +206,7 @@ namespace LogReader_WPF
             var resutls = about.ShowDialog();
         }
 
-        private void SearchGrid(object sender, RoutedEventArgs e)
+        private async void SearchGrid(object sender, RoutedEventArgs e)
         {
             ShowAllRows();
 
@@ -152,7 +215,6 @@ namespace LogReader_WPF
                 if (dgr.Item.ToString().IndexOf(SearchBox.Text) < 0)
                 {
                     dgr.Visibility = Visibility.Collapsed;
-                    
                 }
             }
         }
@@ -166,7 +228,7 @@ namespace LogReader_WPF
         {
             foreach (DataGridRow dgr in LogFileData.Items)
             {
-               dgr.Visibility = Visibility.Visible;
+                dgr.Visibility = Visibility.Visible;
             }
         }
     }

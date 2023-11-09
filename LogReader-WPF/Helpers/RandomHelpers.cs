@@ -11,6 +11,4 @@ namespace LogReader_WPF
     {
         public static Version GetCurrentVerion() => Assembly.GetEntryAssembly().GetName().Version;
     }
-
-     
 }
