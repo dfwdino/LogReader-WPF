@@ -86,9 +86,6 @@ namespace LogReader_WPF
             OpenFileLog(FileLocation);
         }
 
-        private void OpenFileLog(string filelocation)
-
-
         private void LoadDataGrid(string filedata)
         {
             LogFileData.Items.Clear();
@@ -116,7 +113,7 @@ namespace LogReader_WPF
             _WarningNumber = 0;
         }
 
-        private void OpenFileLog(string logfilelocation)
+        private void OpenFileLog(string filelocation)
         {
             System.IO.StreamReader myFile = null;
             bool FoundHistory = false;
