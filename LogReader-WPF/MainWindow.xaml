@@ -32,6 +32,7 @@
             <DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding Path=.}"/>
             </DataGrid.Columns>
+
             <DataGrid.ItemContainerStyle>
                 <Style TargetType="DataGridRow">
                     <Style.Triggers>

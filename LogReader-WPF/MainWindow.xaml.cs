@@ -37,6 +37,8 @@ namespace LogReader_WPF
 
         private void AddTextToRow(string message)
         {
+            LogFileData.FontSize = 21;
+
             foreach (var item in message.Split(Environment.NewLine))
             {
                 DataGridRow dgr = new DataGridRow();
