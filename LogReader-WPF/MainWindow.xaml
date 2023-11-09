@@ -12,6 +12,13 @@
             <Menu.BitmapEffect>
                 <DropShadowBitmapEffect />
             </Menu.BitmapEffect>
+            <MenuItem Name="MenuHistory" Header="_History">
+                <MenuItem.ItemContainerStyle>
+                    <Style TargetType="{x:Type MenuItem}">
+                        <EventSetter Event="Click" Handler="OpenLogFile_Click"/>
+                    </Style>
+                </MenuItem.ItemContainerStyle>
+            </MenuItem>
             <MenuItem Header="_Help">
                 <MenuItem Header="_About" Click="OpenAbout"/>
             </MenuItem>

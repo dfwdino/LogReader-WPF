@@ -34,33 +34,81 @@ namespace LogReader_WPF
 
         private void OpenLogFile_Click(object sender, RoutedEventArgs e)
         {
-            LogFileLocation.Text = FIleIO.OpenFileDialog();
-            LogFileData.Items.Clear();
-            StatusBar.Text = $"Loading file {LogFileLocation.Text}.";
 
-            WarningNumber.Text = _WarningNumber.ToString();
-            ErrorNumber.Text = _ErrorNumber.ToString();
+            bool IsMenuType = sender.GetType().Name == typeof(MenuItem).Name;
+            string FileLocation = string.Empty;
+
+            if (IsMenuType)
+            {
+                MenuItem historyitem = (MenuItem)sender;
+                FileLocation = historyitem.ToolTip.ToString();
+            }
+            else
+            {
+                FileLocation = FIleIO.OpenFileDialog();
+                LogFileData.Items.Clear();
+                StatusBar.Text = $"Loading file {LogFileLocation.Text}.";
+
+                WarningNumber.Text = _WarningNumber.ToString();
+                ErrorNumber.Text = _ErrorNumber.ToString();
+            }
+
+
 
             //await Task.Run(() =>
             //{
             //    OpenFileLog();
             //});
-
-            OpenFileLog();
+            LogFileLocation.Text = FileLocation;
+            OpenFileLog(FileLocation);
         }
 
-        private void OpenFileLog()
+        private void OpenFileLog(string filelocation)
         {
 
             System.IO.StreamReader myFile = null;
+            bool FoundHistory = false;
+
+
+            if (filelocation.Length.Equals(0))
+            {
+                return;
+            }
+
+            string filename = System.IO.Path.GetFileNameWithoutExtension(LogFileLocation.Text);
 
             try
             {
-                myFile = new System.IO.StreamReader(LogFileLocation.Text);
+                myFile = new System.IO.StreamReader(filelocation);
+                
+
+                foreach (MenuItem item in MenuHistory.Items)
+                {
+                     if(item.Header.ToString() == filename)
+                    {
+                        FoundHistory = true;
+                        break;
+                    }
+                }
+
+                if (FoundHistory.Equals(false))
+                {
+                    MenuItem menuItem = new MenuItem();
+
+                    menuItem.Header = filename;
+                    menuItem.ToolTip = LogFileLocation.Text;
+
+                        
+
+                    MenuHistory.Items.Add(menuItem);
+
+                }
+
+                
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error {ex.Message}");
+                MessageBox.Show($"Error: {ex.Message}");
                 return;
             }
 
@@ -128,9 +176,31 @@ namespace LogReader_WPF
 
                 LogFileLocation.Text = files[0];
 
-                //WTF
+                //WTF need to make this a function
+                bool FoundHistory = false;
+                string filename = System.IO.Path.GetFileNameWithoutExtension(files[0]);
 
-                OpenFileLog();
+                foreach (MenuItem item in MenuHistory.Items)
+                {
+                    if (item.Header.ToString() == filename)
+                    {
+                        FoundHistory = true;
+                        break;
+                    }
+                }
+
+                if (FoundHistory.Equals(false))
+                {
+                    MenuItem menuItem = new MenuItem();
+
+                    menuItem.Header = filename;
+                    menuItem.ToolTip = LogFileLocation.Text;
+
+                    MenuHistory.Items.Add(menuItem);
+
+                }
+
+                OpenFileLog(files[0]);
 
 
             }
