@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using LogReader_WPF.Models;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -19,7 +20,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
-using static LogReader_WPF.LogFileErrorColorModel;
+
 
 namespace LogReader_WPF
 {
@@ -32,12 +33,13 @@ namespace LogReader_WPF
         private int _WarningNumber = 0;
         private bool OddRow = false;
         private LogFileErrorColorModel AppErrorColors;
+        private SettingsModel SettingModel;
 
         public delegate void AddTextToRowCallback(string message);
 
         private void AddTextToRow(List<string> message)
         {
-            LogFileData.FontSize = 21;
+            LogFileData.FontSize = SettingModel.FontSize;
 
             foreach (var item in message)
             {
@@ -202,7 +204,11 @@ namespace LogReader_WPF
             );
             string AppSettingsJson = File.ReadAllText(jsonpath).ToString();
 
+            SettingModel = JsonConvert.DeserializeObject<SettingsModel>(AppSettingsJson);
+
             AppErrorColors = JsonConvert.DeserializeObject<LogFileErrorColorModel>(AppSettingsJson);
+
+
         }
 
         private void DataGridFile_Drop(object sender, DragEventArgs e)

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 
-namespace LogReader_WPF
+namespace LogReader_WPF.Models
 {
     public class LogFileErrorColorModel
     {
