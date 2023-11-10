@@ -35,11 +35,11 @@ namespace LogReader_WPF
 
         public delegate void AddTextToRowCallback(string message);
 
-        private void AddTextToRow(string message)
+        private void AddTextToRow(List<string> message)
         {
             LogFileData.FontSize = 21;
 
-            foreach (var item in message.Split(Environment.NewLine))
+            foreach (var item in message)
             {
                 DataGridRow dgr = new DataGridRow();
 
@@ -78,23 +78,19 @@ namespace LogReader_WPF
                 ErrorNumber.Text = _ErrorNumber.ToString();
             }
 
-
-
-            //await Task.Run(() =>
-            //{
-            //    OpenFileLog();
-            //});
             LogFileLocation.Text = FileLocation;
             OpenFileLog(FileLocation);
         }
 
-        private void LoadDataGrid(string filedata)
+        private void LoadDataGrid(List<string> filedata)
         {
             LogFileData.Items.Clear();
 
             Application.Current.Dispatcher.Invoke(DispatcherPriority.Background, new Action(delegate () { AddTextToRow(filedata); }));
 
-            //foreach (var item in filedata.Split(Environment.NewLine))
+            //LogFileData.FontSize = 21;
+
+            //foreach (var item in filedata)
             //{
             //    DataGridRow dgr = new DataGridRow();
 
@@ -103,7 +99,7 @@ namespace LogReader_WPF
             //    dgr.Background = GetRowColor(item);
 
             //    LogFileData.Items.Add(dgr);
-                
+
             //}
 
             StatusBar.Text = $"Log file loaded {LogFileLocation.Text}.";
@@ -117,45 +113,22 @@ namespace LogReader_WPF
 
         private void OpenFileLog(string filelocation)
         {
-            System.IO.StreamReader myFile = null;
-            bool FoundHistory = false;
-
-
+            List<string> LogFileText = new List<string>();
+       
             if (filelocation.Length.Equals(0))
             {
                 return;
             }
 
-            string filename = System.IO.Path.GetFileNameWithoutExtension(LogFileLocation.Text);
-
+         
             try
             {
-                myFile = new System.IO.StreamReader(filelocation);
-                
+                LogFileText = File.ReadLines(filelocation).ToList();
 
-                foreach (MenuItem item in MenuHistory.Items)
-                {
-                     if(item.Header.ToString() == filename)
-                    {
-                        FoundHistory = true;
-                        break;
-                    }
-                }
+                LogFileLocation.Text = filelocation;
 
-                if (FoundHistory.Equals(false))
-                {
-                    MenuItem menuItem = new MenuItem();
+                AddCheckForHistoryEntry(filelocation, MenuHistory);
 
-                    menuItem.Header = filename;
-                    menuItem.ToolTip = LogFileLocation.Text;
-
-                        
-
-                    MenuHistory.Items.Add(menuItem);
-
-                }
-
-                
             }
             catch (Exception ex)
             {
@@ -163,11 +136,7 @@ namespace LogReader_WPF
                 return;
             }
 
-            string myString = myFile.ReadToEnd();
-
-            myFile.Close();
-
-            LoadDataGrid(myString);
+            LoadDataGrid(LogFileText);
 
         }
 
@@ -243,34 +212,40 @@ namespace LogReader_WPF
                 // Note that you can have more than one file.
                 string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
 
-                LogFileLocation.Text = files[0];
+                string FileLocation = files[0];
 
-                //WTF need to make this a function
-                bool FoundHistory = false;
-                string filename = System.IO.Path.GetFileNameWithoutExtension(files[0]);
+                LogFileLocation.Text = FileLocation;
 
-                foreach (MenuItem item in MenuHistory.Items)
+                 AddCheckForHistoryEntry(FileLocation, MenuHistory);
+
+                 OpenFileLog(FileLocation);
+
+
+            }
+        }
+
+        private void AddCheckForHistoryEntry(string HistoryEntry, MenuItem HistoryMenu)
+        {
+            bool FoundHistory = false;
+            string filename = System.IO.Path.GetFileNameWithoutExtension(HistoryEntry);
+
+            foreach (MenuItem item in MenuHistory.Items)
+            {
+                if (item.Header.ToString() == filename)
                 {
-                    if (item.Header.ToString() == filename)
-                    {
-                        FoundHistory = true;
-                        break;
-                    }
+                    FoundHistory = true;
+                    break;
                 }
+            }
 
-                if (FoundHistory.Equals(false))
-                {
-                    MenuItem menuItem = new MenuItem();
+            if (FoundHistory.Equals(false))
+            {
+                MenuItem menuItem = new MenuItem();
 
-                    menuItem.Header = filename;
-                    menuItem.ToolTip = LogFileLocation.Text;
+                menuItem.Header = filename;
+                menuItem.ToolTip = LogFileLocation.Text;
 
-                    MenuHistory.Items.Add(menuItem);
-
-                }
-
-                OpenFileLog(files[0]);
-
+                HistoryMenu.Items.Add(menuItem);
 
             }
         }
@@ -288,7 +263,7 @@ namespace LogReader_WPF
 
             foreach (DataGridRow dgr in LogFileData.Items)
             {
-                if (dgr.Item.ToString().IndexOf(SearchBox.Text) < 0)
+                if (dgr.Item.ToString().IndexOf(SearchBox.Text,StringComparison.OrdinalIgnoreCase) < 0)
                 {
                     dgr.Visibility = Visibility.Collapsed;
                 }
@@ -297,11 +272,13 @@ namespace LogReader_WPF
 
         private void ClearSearch(object sender, RoutedEventArgs e)
         {
+            SearchBox.Text = string.Empty;
             ShowAllRows();
         }
 
         private void ShowAllRows()
         {
+           
             foreach (DataGridRow dgr in LogFileData.Items)
             {
                 dgr.Visibility = Visibility.Visible;
