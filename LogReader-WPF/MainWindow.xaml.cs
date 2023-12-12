@@ -2,25 +2,12 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
-
 
 namespace LogReader_WPF
 {
@@ -34,6 +21,7 @@ namespace LogReader_WPF
         private bool OddRow = false;
         private LogFileErrorColorModel AppErrorColors;
         private SettingsModel SettingModel;
+        private string CurrentFolder = string.Empty;
 
         public delegate void AddTextToRowCallback(string message);
 
@@ -50,7 +38,6 @@ namespace LogReader_WPF
                 dgr.Background = GetRowColor(item);
 
                 LogFileData.Items.Add(dgr);
-
             }
         }
 
@@ -61,7 +48,6 @@ namespace LogReader_WPF
 
         private async void OpenLogFile_Click(object sender, RoutedEventArgs e)
         {
-
             bool IsMenuType = sender.GetType().Name == typeof(MenuItem).Name;
             string FileLocation = string.Empty;
 
@@ -116,21 +102,23 @@ namespace LogReader_WPF
         private void OpenFileLog(string filelocation)
         {
             List<string> LogFileText = new List<string>();
-       
+
             if (filelocation.Length.Equals(0))
             {
                 return;
             }
 
-         
             try
             {
+                
+
                 LogFileText = File.ReadLines(filelocation).ToList();
 
                 LogFileLocation.Text = filelocation;
 
                 AddCheckForHistoryEntry(filelocation, MenuHistory);
 
+                LoadLogFileFolder(filelocation);
             }
             catch (Exception ex)
             {
@@ -139,7 +127,6 @@ namespace LogReader_WPF
             }
 
             LoadDataGrid(LogFileText);
-
         }
 
         private SolidColorBrush GetRowColor(string data)
@@ -202,14 +189,54 @@ namespace LogReader_WPF
                 "AppSettings",
                 "AppSettings.json"
             );
+
             string AppSettingsJson = File.ReadAllText(jsonpath).ToString();
 
             SettingModel = JsonConvert.DeserializeObject<SettingsModel>(AppSettingsJson);
 
             AppErrorColors = JsonConvert.DeserializeObject<LogFileErrorColorModel>(AppSettingsJson);
+                        
+        }
 
+        private void LoadLogFileFolder(string path)
+        {
+            string currentfiledir = Path.GetDirectoryName(path);
+
+            if (!CurrentFolder.Equals(currentfiledir))
+            {
+                FileList.Items.Clear();
+                CurrentFolder = currentfiledir;
+                foreach (var item in Directory.GetFiles(currentfiledir))
+                {
+                    ListBoxItem listBoxItem = new ListBoxItem();
+
+                    listBoxItem.Tag = item;
+                    listBoxItem.Content = Path.GetFileName(item);
+
+                    FileList.Items.Add(listBoxItem);
+
+                }
+            }
+        }
+
+
+        private void LoadLogFile(object sender, SelectionChangedEventArgs e)
+        {
+
+            if (((ListBox)sender).Items.Count > 0)//BAD code?????
+            {
+
+                var selectedLogFile = (ListBoxItem)FileList.SelectedItem;
+
+                LogFileLocation.Text = selectedLogFile.Tag.ToString();
+
+                AddCheckForHistoryEntry(selectedLogFile.Tag.ToString(), MenuHistory);
+
+                OpenFileLog(selectedLogFile.Tag.ToString());
+            }
 
         }
+
 
         private void DataGridFile_Drop(object sender, DragEventArgs e)
         {
@@ -222,11 +249,9 @@ namespace LogReader_WPF
 
                 LogFileLocation.Text = FileLocation;
 
-                 AddCheckForHistoryEntry(FileLocation, MenuHistory);
+                AddCheckForHistoryEntry(FileLocation, MenuHistory);
 
-                 OpenFileLog(FileLocation);
-
-
+                OpenFileLog(FileLocation);
             }
         }
 
@@ -252,7 +277,6 @@ namespace LogReader_WPF
                 menuItem.ToolTip = LogFileLocation.Text;
 
                 HistoryMenu.Items.Add(menuItem);
-
             }
         }
 
@@ -269,7 +293,7 @@ namespace LogReader_WPF
 
             foreach (DataGridRow dgr in LogFileData.Items)
             {
-                if (dgr.Item.ToString().IndexOf(SearchBox.Text,StringComparison.OrdinalIgnoreCase) < 0)
+                if (dgr.Item.ToString().IndexOf(SearchBox.Text, StringComparison.OrdinalIgnoreCase) < 0)
                 {
                     dgr.Visibility = Visibility.Collapsed;
                 }
@@ -284,7 +308,6 @@ namespace LogReader_WPF
 
         private void ShowAllRows()
         {
-           
             foreach (DataGridRow dgr in LogFileData.Items)
             {
                 dgr.Visibility = Visibility.Visible;

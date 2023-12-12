@@ -27,7 +27,7 @@
 
         <DataGrid
             x:Name="LogFileData"
-            Margin="10,55,10,23"
+            Margin="218,55,10,23"
             AllowDrop="True" Drop="DataGridFile_Drop">
             <DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding Path=.}"/>
@@ -60,6 +60,7 @@
         <TextBox HorizontalAlignment="Left" Margin="916,29,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120" Name="SearchBox"/>
         <Button Content="Search Grid" HorizontalAlignment="Left" Margin="1074,27,0,0" VerticalAlignment="Top" Click="SearchGrid"/>
         <Button Content="Clear Search" HorizontalAlignment="Left" Margin="1155,27,0,0" VerticalAlignment="Top" Click="ClearSearch"/>
+        <ListBox Name="FileList" Margin="10,55,0,27" SelectionChanged="LoadLogFile" HorizontalAlignment="Left" Width="186"/>
 
     </Grid>
 </Window>
