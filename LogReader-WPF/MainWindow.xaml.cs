@@ -32,6 +32,7 @@ namespace LogReader_WPF
             foreach (var item in message)
             {
                 DataGridRow dgr = new DataGridRow();
+                //dgr.Width = 0;
 
                 dgr.Item = item;
 
@@ -195,7 +196,8 @@ namespace LogReader_WPF
             SettingModel = JsonConvert.DeserializeObject<SettingsModel>(AppSettingsJson);
 
             AppErrorColors = JsonConvert.DeserializeObject<LogFileErrorColorModel>(AppSettingsJson);
-                        
+
+
         }
 
         private void LoadLogFileFolder(string path)
@@ -291,9 +293,23 @@ namespace LogReader_WPF
         {
             ShowAllRows();
 
+            string searchtext = string.Empty;
+
+            if (sender.GetType() == typeof(Label))
+            {
+                string valuetext = ((Label)sender).Tag.ToString();
+                searchtext = valuetext;
+            }
+            else
+            {
+                searchtext = SearchBox.Text;
+            }
+
+             
+
             foreach (DataGridRow dgr in LogFileData.Items)
             {
-                if (dgr.Item.ToString().IndexOf(SearchBox.Text, StringComparison.OrdinalIgnoreCase) < 0)
+                if (dgr.Item.ToString().IndexOf(searchtext, StringComparison.OrdinalIgnoreCase) < 0)
                 {
                     dgr.Visibility = Visibility.Collapsed;
                 }
@@ -311,6 +327,24 @@ namespace LogReader_WPF
             foreach (DataGridRow dgr in LogFileData.Items)
             {
                 dgr.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void HideShowFolderList(object sender, RoutedEventArgs e)
+        {
+            double adsf = FileList.Width;
+
+            if(FileList.Visibility == Visibility.Collapsed)
+            {
+                FileList.Visibility = Visibility.Visible;
+                ShowHideFileList.Content = "Hide ListBox";
+
+            }
+            else {
+                FileList.Visibility = Visibility.Collapsed;
+                LogFileData.VerticalAlignment = VerticalAlignment.Stretch;
+                ShowHideFileList.Content = "Show ListBox";
+                
             }
         }
     }
