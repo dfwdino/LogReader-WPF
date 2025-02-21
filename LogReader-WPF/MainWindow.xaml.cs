@@ -30,13 +30,10 @@ namespace LogReader_WPF
         {
             List<LogEntry> logEntry = new();
 
-            //int errorCount = 0;
-            //int warningCount = 0;
-
             foreach (var item in logfile)
             {
-                bool isError = FlagWords.ErrorWords.Any(word => item.Contains(word));
-                bool isWarning = FlagWords.WarningWords.Any(word => item.Contains(word));
+                bool isError = FlagWords.ErrorWords.Any(word => item.Contains(word, StringComparison.OrdinalIgnoreCase));
+                bool isWarning = FlagWords.WarningWords.Any(word => item.Contains(word, StringComparison.OrdinalIgnoreCase));
 
                 logEntry.Add(new LogEntry
                 {

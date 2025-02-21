@@ -2,8 +2,8 @@
 {
     public struct FlagWords
     {
-        public static string[] ErrorWords = { "Error", "ERROR", "failed" };
+        public static string[] ErrorWords = { "Error" };
 
-        public static string[] WarningWords = { "Warning", "WARNING" };
+        public static string[] WarningWords = { "Warning" };
     }
 }
