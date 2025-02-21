@@ -28,20 +28,28 @@ namespace LogReader_WPF
 
         private async Task AddTextToRowAsync(List<string> logfile)
         {
-            //LogFileData.FontSize = SettingModel.FontSize;
-
             List<LogEntry> logEntry = new();
+
+            //int errorCount = 0;
+            //int warningCount = 0;
 
             foreach (var item in logfile)
             {
+                bool isError = FlagWords.ErrorWords.Any(word => item.Contains(word));
+                bool isWarning = FlagWords.WarningWords.Any(word => item.Contains(word));
+
                 logEntry.Add(new LogEntry
                 {
                     Content = item,
-                    IsError = FlagWords.ErrorWords.Any(word => item.Contains(word)),
-                    IsWarning = FlagWords.WarningWords.Any(word => item.Contains(word))
+                    IsError = isError,
+                    IsWarning = isWarning
                 });
 
+                if (isError) _ErrorNumber++;
+                if (isWarning) _WarningNumber++;
             }
+
+
 
             await Dispatcher.InvokeAsync(() =>
             {
