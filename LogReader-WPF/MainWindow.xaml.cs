@@ -73,7 +73,7 @@ namespace LogReader_WPF
             else
             {
                 FileLocation = FIleIO.OpenFileDialog();
-                LogFileData.Items.Clear();
+                LogFileData.ItemsSource = null;
                 StatusBar.Text = $"Loading file {LogFileLocation.Text}.";
 
                 WarningNumber.Text = _WarningNumber.ToString();
@@ -300,27 +300,17 @@ namespace LogReader_WPF
         {
             ShowAllRows();
 
-            string searchtext = string.Empty;
+            string valuetext = SearchBox.Text;
 
-            if (sender.GetType() == typeof(Label))
+            if (!string.IsNullOrEmpty(valuetext))
             {
-                string valuetext = ((Label)sender).Tag.ToString();
-                searchtext = valuetext;
-            }
-            else
-            {
-                searchtext = SearchBox.Text;
-            }
-
-
-
-            foreach (DataGridRow dgr in LogFileData.Items)
-            {
-                if (dgr.Item.ToString().IndexOf(searchtext, StringComparison.OrdinalIgnoreCase) < 0)
+                LogFileData.Items.Filter = item =>
                 {
-                    dgr.Visibility = Visibility.Collapsed;
-                }
+                    var logEntry = item as LogEntry;
+                    return logEntry != null && logEntry.Content.Contains(valuetext, StringComparison.OrdinalIgnoreCase);
+                };
             }
+
         }
 
         private void ClearSearch(object sender, RoutedEventArgs e)
@@ -331,10 +321,7 @@ namespace LogReader_WPF
 
         private void ShowAllRows()
         {
-            foreach (DataGridRow dgr in LogFileData.Items)
-            {
-                dgr.Visibility = Visibility.Visible;
-            }
+            LogFileData.Items.Filter = null;
         }
 
         private void HideShowFolderList(object sender, RoutedEventArgs e)
