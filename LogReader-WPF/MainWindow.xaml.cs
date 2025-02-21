@@ -26,7 +26,7 @@ namespace LogReader_WPF
 
         //public delegate void AddTextToRowCallback(string message);
 
-        private async Task AddTextToRowAsync(List<string> logfile)
+        private async Task CreateEntrysForGridAsync(List<string> logfile)
         {
             List<LogEntry> logEntry = new();
 
@@ -84,13 +84,13 @@ namespace LogReader_WPF
             OpenFileLogAsync(FileLocation);
         }
 
-        private async Task LoadDataGridAsync(List<string> filedata)
+        private async void LoadDataGridAsync(List<string> filedata)
         {
-            LogFileData.Items.Clear();
+            LogFileData.ItemsSource = null;
 
             await Task.Run(() =>
             {
-                AddTextToRowAsync(filedata);
+                CreateEntrysForGridAsync(filedata);
             });
 
             StatusBar.Text = $"Log file loaded {LogFileLocation.Text}.";
@@ -209,11 +209,11 @@ namespace LogReader_WPF
 
         private void LoadLogFileFolder(string path)
         {
-            string currentfiledir = Path.GetDirectoryName(path);
+            string? currentfiledir = Path.GetDirectoryName(path);
 
-            if (!CurrentFolder.Equals(currentfiledir))
+            if (currentfiledir != null && !CurrentFolder.Equals(currentfiledir))
             {
-                FileList.Items.Clear();
+                FileList.ItemsSource = null;
                 CurrentFolder = currentfiledir;
                 foreach (var item in Directory.GetFiles(currentfiledir))
                 {
@@ -223,7 +223,6 @@ namespace LogReader_WPF
                     listBoxItem.Content = Path.GetFileName(item);
 
                     FileList.Items.Add(listBoxItem);
-
                 }
             }
         }
