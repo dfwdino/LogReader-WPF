@@ -45,21 +45,27 @@
         <DataGrid Margin="220,67,10,40"
                     x:Name="LogFileData"
                     AllowDrop="True" 
-                  Drop="DataGridFile_Drop">
+                    Drop="DataGridFile_Drop"
+                    AutoGenerateColumns="False">
 
             <DataGrid.Columns>
-                <DataGridTextColumn Binding="{Binding .}" />
+              <DataGridTextColumn Header="Content" Binding="{Binding Content}" />
+                 <!-- <DataGridCheckBoxColumn Header="Is Error" Binding="{Binding IsError}" />
+                <DataGridCheckBoxColumn Header="Is Warning" Binding="{Binding IsWarning}" />-->
             </DataGrid.Columns>
 
-            <DataGrid.ItemContainerStyle>
-                <Style TargetType="{x:Type DataGridRow}">
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
                     <Style.Triggers>
-                        <DataTrigger Binding="{Binding}"  Value="true">
-                            <Setter Property="Visibility" Value="Collapsed" />
+                        <DataTrigger Binding="{Binding IsError}" Value="True">
+                            <Setter Property="Background" Value="LightPink"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsWarning}" Value="True">
+                            <Setter Property="Background" Value="LightYellow"/>
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
-            </DataGrid.ItemContainerStyle>
+            </DataGrid.RowStyle>
         </DataGrid>
 
     </Grid>

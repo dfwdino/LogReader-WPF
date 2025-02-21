@@ -1,13 +1,14 @@
-﻿using LogReader_WPF.Models;
+﻿using LogReader_WPF.Model;
+using LogReader_WPF.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Threading;
 
 namespace LogReader_WPF
 {
@@ -23,23 +24,30 @@ namespace LogReader_WPF
         private SettingsModel SettingModel;
         private string CurrentFolder = string.Empty;
 
-        public delegate void AddTextToRowCallback(string message);
+        //public delegate void AddTextToRowCallback(string message);
 
-        private void AddTextToRow(List<string> message)
+        private async Task AddTextToRowAsync(List<string> logfile)
         {
-            LogFileData.FontSize = SettingModel.FontSize;
+            //LogFileData.FontSize = SettingModel.FontSize;
 
-            foreach (var item in message)
+            List<LogEntry> logEntry = new();
+
+            foreach (var item in logfile)
             {
-                DataGridRow dgr = new DataGridRow();
-                //dgr.Width = 0;
+                logEntry.Add(new LogEntry
+                {
+                    Content = item,
+                    IsError = FlagWords.ErrorWords.Any(word => item.Contains(word)),
+                    IsWarning = FlagWords.WarningWords.Any(word => item.Contains(word))
+                });
 
-                dgr.Item = item;
-
-                dgr.Background = GetRowColor(item);
-
-                LogFileData.Items.Add(dgr);
             }
+
+            await Dispatcher.InvokeAsync(() =>
+            {
+                LogFileData.ItemsSource = logEntry;
+            });
+
         }
 
         public MainWindow()
@@ -68,28 +76,17 @@ namespace LogReader_WPF
             }
 
             LogFileLocation.Text = FileLocation;
-            OpenFileLog(FileLocation);
+            OpenFileLogAsync(FileLocation);
         }
 
-        private void LoadDataGrid(List<string> filedata)
+        private async Task LoadDataGridAsync(List<string> filedata)
         {
             LogFileData.Items.Clear();
 
-            Application.Current.Dispatcher.Invoke(DispatcherPriority.Background, new Action(delegate () { AddTextToRow(filedata); }));
-
-            //LogFileData.FontSize = 21;
-
-            //foreach (var item in filedata)
-            //{
-            //    DataGridRow dgr = new DataGridRow();
-
-            //    dgr.Item = item;
-
-            //    dgr.Background = GetRowColor(item);
-
-            //    LogFileData.Items.Add(dgr);
-
-            //}
+            await Task.Run(() =>
+            {
+                AddTextToRowAsync(filedata);
+            });
 
             StatusBar.Text = $"Log file loaded {LogFileLocation.Text}.";
 
@@ -100,7 +97,7 @@ namespace LogReader_WPF
             _WarningNumber = 0;
         }
 
-        private void OpenFileLog(string filelocation)
+        private async Task OpenFileLogAsync(string filelocation)
         {
             List<string> LogFileText = new List<string>();
 
@@ -111,9 +108,7 @@ namespace LogReader_WPF
 
             try
             {
-                
-
-                LogFileText = File.ReadLines(filelocation).ToList();
+                LogFileText = await ReadFileAsync(filelocation);
 
                 LogFileLocation.Text = filelocation;
 
@@ -127,7 +122,12 @@ namespace LogReader_WPF
                 return;
             }
 
-            LoadDataGrid(LogFileText);
+            LoadDataGridAsync(LogFileText);
+        }
+
+        private async Task<List<string>> ReadFileAsync(string filePath)
+        {
+            return await Task.Run(() => File.ReadAllLines(filePath).ToList());
         }
 
         private SolidColorBrush GetRowColor(string data)
@@ -200,6 +200,8 @@ namespace LogReader_WPF
 
         }
 
+
+
         private void LoadLogFileFolder(string path)
         {
             string currentfiledir = Path.GetDirectoryName(path);
@@ -234,7 +236,7 @@ namespace LogReader_WPF
 
                 AddCheckForHistoryEntry(selectedLogFile.Tag.ToString(), MenuHistory);
 
-                OpenFileLog(selectedLogFile.Tag.ToString());
+                OpenFileLogAsync(selectedLogFile.Tag.ToString());
             }
 
         }
@@ -253,7 +255,7 @@ namespace LogReader_WPF
 
                 AddCheckForHistoryEntry(FileLocation, MenuHistory);
 
-                OpenFileLog(FileLocation);
+                OpenFileLogAsync(FileLocation);
             }
         }
 
@@ -305,7 +307,7 @@ namespace LogReader_WPF
                 searchtext = SearchBox.Text;
             }
 
-             
+
 
             foreach (DataGridRow dgr in LogFileData.Items)
             {
@@ -334,17 +336,18 @@ namespace LogReader_WPF
         {
             double adsf = FileList.Width;
 
-            if(FileList.Visibility == Visibility.Collapsed)
+            if (FileList.Visibility == Visibility.Collapsed)
             {
                 FileList.Visibility = Visibility.Visible;
                 ShowHideFileList.Content = "Hide ListBox";
 
             }
-            else {
+            else
+            {
                 FileList.Visibility = Visibility.Collapsed;
                 LogFileData.VerticalAlignment = VerticalAlignment.Stretch;
                 ShowHideFileList.Content = "Show ListBox";
-                
+
             }
         }
     }
