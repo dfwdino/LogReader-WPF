@@ -24,7 +24,7 @@ namespace LogReader_WPF
         private SettingsModel SettingModel;
         private string CurrentFolder = string.Empty;
 
-        //public delegate void AddTextToRowCallback(string message);
+
 
         private async Task CreateEntrysForGridAsync(List<string> logfile)
         {
@@ -46,13 +46,7 @@ namespace LogReader_WPF
                 if (isWarning) _WarningNumber++;
             }
 
-
-
-            await Dispatcher.InvokeAsync(() =>
-            {
-                LogFileData.ItemsSource = logEntry;
-            });
-
+            await Dispatcher.InvokeAsync(() => LogFileData.ItemsSource = logEntry);
         }
 
         public MainWindow()
@@ -62,12 +56,10 @@ namespace LogReader_WPF
 
         private async void OpenLogFile_Click(object sender, RoutedEventArgs e)
         {
-            bool IsMenuType = sender.GetType().Name == typeof(MenuItem).Name;
             string FileLocation = string.Empty;
 
-            if (IsMenuType)
+            if (sender is MenuItem historyitem)
             {
-                MenuItem historyitem = (MenuItem)sender;
                 FileLocation = historyitem.ToolTip.ToString();
             }
             else
@@ -75,16 +67,13 @@ namespace LogReader_WPF
                 FileLocation = FIleIO.OpenFileDialog();
                 LogFileData.ItemsSource = null;
                 StatusBar.Text = $"Loading file {LogFileLocation.Text}.";
-
-                WarningNumber.Text = _WarningNumber.ToString();
-                ErrorNumber.Text = _ErrorNumber.ToString();
             }
 
             LogFileLocation.Text = FileLocation;
-            OpenFileLogAsync(FileLocation);
+            await OpenFileLogAsync(FileLocation);
         }
 
-        private async void LoadDataGridAsync(List<string> filedata)
+        private async Task LoadDataGridAsync(List<string> filedata)
         {
             LogFileData.ItemsSource = null;
 
@@ -104,21 +93,15 @@ namespace LogReader_WPF
 
         private async Task OpenFileLogAsync(string filelocation)
         {
-            List<string> LogFileText = new List<string>();
+            if (string.IsNullOrWhiteSpace(filelocation)) return;
 
-            if (filelocation.Length.Equals(0))
-            {
-                return;
-            }
+            List<string> LogFileText = new();
 
             try
             {
                 LogFileText = await ReadFileAsync(filelocation);
-
                 LogFileLocation.Text = filelocation;
-
                 AddCheckForHistoryEntry(filelocation, MenuHistory);
-
                 LoadLogFileFolder(filelocation);
             }
             catch (Exception ex)
@@ -127,12 +110,13 @@ namespace LogReader_WPF
                 return;
             }
 
-            LoadDataGridAsync(LogFileText);
+            await LoadDataGridAsync(LogFileText);
         }
 
         private async Task<List<string>> ReadFileAsync(string filePath)
         {
-            return await Task.Run(() => File.ReadAllLines(filePath).ToList());
+            using var reader = new StreamReader(filePath);
+            return await reader.ReadToEndAsync().ContinueWith(t => t.Result.Split(Environment.NewLine).ToList());
         }
 
         private SolidColorBrush GetRowColor(string data)
