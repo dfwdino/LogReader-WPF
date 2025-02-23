@@ -47,7 +47,7 @@
         </Grid>
 
 
-        <Grid Grid.Row="1" Margin="0,0,10,10">
+        <Grid x:Name="FileListGrid" Grid.Row="1" Margin="0,0,10,10">
             <Grid.RowDefinitions>
                 <RowDefinition Height="396*"/>
                 <RowDefinition Height="*"/>
@@ -57,7 +57,8 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="auto" MinWidth="213"/>
                 <ColumnDefinition Width="Auto" MinWidth="23"/>
-                <ColumnDefinition Width="auto" MinWidth="8"/>
+                <ColumnDefinition Width="1062.307"/>
+                <ColumnDefinition Width="273.693"/>
             </Grid.ColumnDefinitions>
 
             <ListBox  Name="FileList" Margin="14,15,0,24"  SelectionChanged="LoadLogFile" ScrollViewer.HorizontalScrollBarVisibility="Auto" Grid.RowSpan="3">
@@ -74,7 +75,7 @@
                     x:Name="LogFileData"
                     AllowDrop="True" 
                     Drop="DataGridFile_Drop"
-                    AutoGenerateColumns="False" Grid.RowSpan="3" HorizontalAlignment="Left" Width="1336">
+                    AutoGenerateColumns="False" Grid.RowSpan="3" HorizontalAlignment="Left" Width="1336" Grid.ColumnSpan="2">
 
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Content" Binding="{Binding Content}" />
@@ -95,8 +96,8 @@
                     </Style>
                 </DataGrid.RowStyle>
             </DataGrid>
-            
-            
+
+
         </Grid>
 
         <Grid Grid.Row="2">

@@ -311,15 +311,20 @@ namespace LogReader_WPF
         {
             double adsf = FileList.Width;
 
+
+
             if (FileList.Visibility == Visibility.Collapsed)
             {
                 FileList.Visibility = Visibility.Visible;
+                FileListGrid.Visibility = Visibility.Visible;
+
                 ShowHideFileList.Content = "Hide ListBox";
 
             }
             else
             {
                 FileList.Visibility = Visibility.Collapsed;
+                FileListGrid.Visibility = Visibility.Collapsed;
                 LogFileData.VerticalAlignment = VerticalAlignment.Stretch;
                 ShowHideFileList.Content = "Show ListBox";
 
