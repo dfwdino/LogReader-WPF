@@ -100,23 +100,7 @@ namespace LogReader_WPF
             try
             {
                 LogFileText = await ReadFileAsync(filelocation);
-                //if (LogFileText.IndexOf("\n") > 0)
-                //{
-                //    List<string> tempfile = new();
-
-                //    foreach (string item in LogFileText)
-                //    {
-                //        var itemfile = item.Split('\n');
-
-                //        foreach (var item2 in itemfile)
-                //        {
-                //            tempfile.Add(item2);
-                //        }
-                //    }
-
-                //    LogFileText = tempfile;
-
-                //}
+               
                 LogFileLocation.Text = filelocation;
                 AddCheckForHistoryEntry(filelocation, MenuHistory);
                 LoadLogFileFolder(filelocation);
@@ -134,7 +118,7 @@ namespace LogReader_WPF
         {
             using var reader = new StreamReader(filePath);
             var content = await reader.ReadToEndAsync();
-            return content.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None).ToList();
+            return content.Split(["\r\n", "\n"], StringSplitOptions.None).ToList();
         }
 
         private SolidColorBrush GetRowColor(string data)
