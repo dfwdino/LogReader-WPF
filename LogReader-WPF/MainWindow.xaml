@@ -51,14 +51,13 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="396*"/>
                 <RowDefinition Height="*"/>
-                <RowDefinition Height="406*"/>
+                <!--<RowDefinition Height="406*"/>-->
             </Grid.RowDefinitions>
 
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="auto" MinWidth="213"/>
                 <ColumnDefinition Width="Auto" MinWidth="23"/>
-                <ColumnDefinition Width="1062.307"/>
-                <ColumnDefinition Width="273.693"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
             <ListBox  Name="FileList" Margin="14,15,0,24"  SelectionChanged="LoadLogFile" ScrollViewer.HorizontalScrollBarVisibility="Auto" Grid.RowSpan="3">
@@ -69,18 +68,19 @@
                 </ListBox.ItemTemplate>
             </ListBox>
 
-            <GridSplitter Width="6" HorizontalAlignment="Center" Background="Black" Margin="0,15,0,10" Grid.Column="1" Grid.RowSpan="3" />
+            <GridSplitter Background="Black" Margin="9,15,8,10" Grid.Column="1" Grid.RowSpan="2" HorizontalAlignment="Stretch" />
 
-            <DataGrid Grid.Column="2" Margin="0,18,0,24"
-                    x:Name="LogFileData"
-                    AllowDrop="True" 
-                    Drop="DataGridFile_Drop"
-                    AutoGenerateColumns="False" Grid.RowSpan="3" HorizontalAlignment="Left" Width="1336" Grid.ColumnSpan="2">
+            <DataGrid Grid.Column="2"
+          x:Name="LogFileData"
+          AllowDrop="True" 
+          Drop="DataGridFile_Drop"
+          AutoGenerateColumns="False" 
+          Margin="0,15,0,22">
 
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Content" Binding="{Binding Content}" />
+                    <DataGridTextColumn Header="Content" Binding="{Binding Content}" Width="*" />
                     <!-- <DataGridCheckBoxColumn Header="Is Error" Binding="{Binding IsError}" />
-                <DataGridCheckBoxColumn Header="Is Warning" Binding="{Binding IsWarning}" />-->
+        <DataGridCheckBoxColumn Header="Is Warning" Binding="{Binding IsWarning}" />-->
                 </DataGrid.Columns>
 
                 <DataGrid.RowStyle>
