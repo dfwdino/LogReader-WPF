@@ -5,107 +5,228 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:LogReader_WPF"
         mc:Ignorable="d"
-        Title="MainWindow" Height="900" Width="1600" Loaded="Window_Loaded">
-    <Grid>
+        Title="Log Reader" Height="900" Width="1600" Loaded="Window_Loaded"
+        Background="#F5F5F5">
+    <Window.Resources>
+        <!-- Modern button style -->
+        <Style x:Key="ModernButton" TargetType="Button">
+            <Setter Property="Background" Value="Black"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                CornerRadius="3">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#1976D2"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#0D47A1"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
 
+        <!-- TextBox style -->
+        <Style x:Key="ModernTextBox" TargetType="TextBox">
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#BDBDBD"/>
+            <Setter Property="Background" Value="White"/>
+        </Style>
+
+        <!-- DataGrid styles -->
+        <Style x:Key="ModernDataGrid" TargetType="DataGrid">
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="RowBackground" Value="White"/>
+            <Setter Property="AlternatingRowBackground" Value="#F9F9F9"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#E0E0E0"/>
+            <Setter Property="VerticalGridLinesBrush" Value="#E0E0E0"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <!-- First row for top content -->
-            <RowDefinition Height="*"/>
-            <!-- Second row for resizable content -->
+            <!-- Menu bar -->
             <RowDefinition Height="Auto"/>
-            <!-- Third row for bottom content -->
+            <!-- Command bar -->
+            <RowDefinition Height="*"/>
+            <!-- Main content area -->
+            <RowDefinition Height="Auto"/>
+            <!-- Status bar -->
         </Grid.RowDefinitions>
 
-        <Menu Height="22" Name="menu1" VerticalAlignment="Top" BorderThickness="2">
-            <Menu.BitmapEffect>
-                <DropShadowBitmapEffect />
-            </Menu.BitmapEffect>
-            <MenuItem Name="MenuHistory" Header="_History">
-                <MenuItem.ItemContainerStyle>
-                    <Style TargetType="{x:Type MenuItem}">
-                        <EventSetter Event="Click" Handler="OpenLogFile_Click" />
-                    </Style>
-                </MenuItem.ItemContainerStyle>
-            </MenuItem>
-            <MenuItem Header="_Help">
-                <MenuItem Header="_About" Click="OpenAbout" />
-            </MenuItem>
-        </Menu>
+        <!-- Modern menu with material design look -->
+        <Border Grid.Row="0" Background="#2196F3" BorderThickness="0,0,0,1" BorderBrush="#1976D2">
+            <Menu Height="28" Name="menu1" Background="Transparent" Foreground="White" FontWeight="Medium" Padding="5,0">
+                <MenuItem Name="MenuHistory" Header="_History" Foreground="Black">
+                    <MenuItem.ItemContainerStyle>
+                        <Style TargetType="{x:Type MenuItem}">
+                            <EventSetter Event="Click" Handler="OpenLogFile_Click" />
+                        </Style>
+                    </MenuItem.ItemContainerStyle>
+                </MenuItem>
+                <MenuItem Header="_Help" Foreground="White">
+                    <MenuItem Header="_About" Click="OpenAbout" />
+                </MenuItem>
+            </Menu>
+        </Border>
 
-        <Grid Grid.Row="0">
-            <TextBox Name="LogFileLocation" HorizontalAlignment="Left" Margin="10,28,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="584" />
-            <Button Content="Open Log" HorizontalAlignment="Left" Margin="599,27,0,0" VerticalAlignment="Top" Click="OpenLogFile_Click" />
-            <Label Content="Warning:" Tag="Warning" HorizontalAlignment="Left" Margin="764,24,0,0" VerticalAlignment="Top" />
-            <TextBlock x:Name="WarningNumber" HorizontalAlignment="Left" Margin="819,30,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="43" />
-            <TextBox HorizontalAlignment="Left" Margin="916,29,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120" Name="SearchBox" />
-            <Button Content="Search Grid" HorizontalAlignment="Left" Margin="1074,27,0,0" VerticalAlignment="Top" Click="SearchGrid" />
-            <Button Content="Clear Search" HorizontalAlignment="Left" Margin="1155,27,0,0" VerticalAlignment="Top" Click="ClearSearch" />
-            <Label Content="Errors:" Tag="Error" HorizontalAlignment="Left" Margin="667,24,0,0" VerticalAlignment="Top" MouseDown="SearchGrid" />
-            <TextBlock Name="ErrorNumber" HorizontalAlignment="Left" Margin="708,29,0,0" TextWrapping="Wrap" Text="0" VerticalAlignment="Top" Width="51" />
-            <Button Name="ShowHideFileList" Content="Hide File List" HorizontalAlignment="Left" Margin="1243,27,0,0" VerticalAlignment="Top" Click="HideShowFolderList" />
-        </Grid>
-
-
-        <Grid x:Name="FileListGrid" Grid.Row="1" Margin="0,0,10,10">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="396*"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="406*"/>
-            </Grid.RowDefinitions>
-
+        <!-- Command bar with spacing and grouped controls -->
+        <Grid Grid.Row="1" Margin="15,15,15,10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="auto" MinWidth="213"/>
-                <ColumnDefinition Width="Auto" MinWidth="23"/>
-                <ColumnDefinition Width="1062.307"/>
-                <ColumnDefinition Width="273.693"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto" MinWidth="316"/>
+                <ColumnDefinition Width="Auto" MinWidth="95"/>
             </Grid.ColumnDefinitions>
 
-            <ListBox  Name="FileList" Margin="14,15,0,24"  SelectionChanged="LoadLogFile" ScrollViewer.HorizontalScrollBarVisibility="Auto" Grid.RowSpan="3">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding}" TextWrapping="NoWrap"/>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
+            <!-- File controls group -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <TextBox Name="LogFileLocation" Style="{StaticResource ModernTextBox}" Width="450" Margin="0,0,10,0" />
+                <Button Content="Open Log" Style="{StaticResource ModernButton}" Click="OpenLogFile_Click" Width="66" />
+            </StackPanel>
 
-            <GridSplitter Width="6" HorizontalAlignment="Center" Background="Black" Margin="0,15,0,10" Grid.Column="1" Grid.RowSpan="3" />
+            <!-- Statistics group -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="20,0,0,0">
+                <Border Background="#FFEBEE" CornerRadius="3" Padding="8,5" Margin="0,0,10,0">
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="Errors:" Tag="Error" Foreground="#D32F2F" FontWeight="SemiBold" Padding="0,0,3,0" VerticalAlignment="Center" MouseDown="SearchGrid" />
+                        <TextBlock Name="ErrorNumber" Text="0" Foreground="#D32F2F" FontWeight="Bold" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+                <Border Background="#FFFDE7" CornerRadius="3" Padding="8,5" Margin="0,0,10,0">
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="Warnings:" Tag="Warning" Foreground="#FFA000" FontWeight="SemiBold" Padding="0,0,3,0" VerticalAlignment="Center" />
+                        <TextBlock Name="WarningNumber" Text="0" Foreground="#FFA000" FontWeight="Bold" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
 
-            <DataGrid Grid.Column="2" Margin="0,18,0,24"
-                    x:Name="LogFileData"
-                    AllowDrop="True" 
-                    Drop="DataGridFile_Drop"
-                    AutoGenerateColumns="False" Grid.RowSpan="3" HorizontalAlignment="Left" Width="1336" Grid.ColumnSpan="2">
+            <!-- Search group -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="20,0,0,0">
+                <TextBox Name="SearchBox" Style="{StaticResource ModernTextBox}" Width="200" Margin="0,0,10,0" />
+                <Button Content="Search" Style="{StaticResource ModernButton}" Click="SearchGrid" Margin="0,0,5,0" Width="41"/>
+                <Button Content="Clear" Style="{StaticResource ModernButton}" Click="ClearSearch" Width="40" />
+            </StackPanel>
 
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Content" Binding="{Binding Content}" />
-                    <!-- <DataGridCheckBoxColumn Header="Is Error" Binding="{Binding IsError}" />
-                <DataGridCheckBoxColumn Header="Is Warning" Binding="{Binding IsWarning}" />-->
-                </DataGrid.Columns>
-
-                <DataGrid.RowStyle>
-                    <Style TargetType="DataGridRow">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsError}" Value="True">
-                                <Setter Property="Background" Value="LightPink"/>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding IsWarning}" Value="True">
-                                <Setter Property="Background" Value="LightYellow"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </DataGrid.RowStyle>
-            </DataGrid>
-
-
+            <!-- View options -->
+            <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="20,0,0,0">
+                <Button Name="ShowHideFileList" Content="Hide File List" Style="{StaticResource ModernButton}" Click="HideShowFolderList" Width="75" />
+            </StackPanel>
         </Grid>
 
-        <Grid Grid.Row="2">
-            <StatusBar Name="sbar" VerticalAlignment="Bottom">
+        <!-- Main content area with file list and log display -->
+        <Grid x:Name="FileListGrid" Grid.Row="2" Margin="15,0,15,15">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto" MinWidth="250" MaxWidth="350"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- File list with border and header -->
+            <Border Grid.Column="0" BorderThickness="1" BorderBrush="#E0E0E0" Background="White" CornerRadius="4">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Log Files" Grid.Row="0" Margin="10,10,10,5" FontWeight="SemiBold" Foreground="#424242"/>
+
+                    <ListBox Grid.Row="1" Name="FileList" Margin="10,0,10,10" BorderThickness="0"
+                             SelectionChanged="LoadLogFile" 
+                             ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" TextWrapping="NoWrap" Margin="0,5"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+
+            <!-- Modern gripper splitter -->
+            <GridSplitter Grid.Column="1" Width="8" HorizontalAlignment="Center" 
+                          Background="Transparent" Margin="2,0" 
+                          Template="{DynamicResource ModernGridSplitter}">
+                <GridSplitter.Resources>
+                    <ControlTemplate x:Key="ModernGridSplitter" TargetType="{x:Type GridSplitter}">
+                        <Border Background="Transparent" Padding="3,0">
+                            <Rectangle Width="2" Fill="#BDBDBD" HorizontalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </GridSplitter.Resources>
+            </GridSplitter>
+
+            <!-- Log content area with border -->
+            <Border Grid.Column="2" BorderThickness="1" BorderBrush="#E0E0E0" Background="White" CornerRadius="4">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Log Content" Grid.Row="0" Margin="10,10,10,5" FontWeight="SemiBold" Foreground="#424242"/>
+
+                    <DataGrid Grid.Row="1" 
+                              Margin="10,0,10,10"
+                              x:Name="LogFileData"
+                              Style="{StaticResource ModernDataGrid}"
+                              AllowDrop="True" 
+                              Drop="DataGridFile_Drop"
+                              AutoGenerateColumns="False"
+                              GridLinesVisibility="Horizontal"
+                              CanUserAddRows="False"
+                              HeadersVisibility="Column"
+                              BorderThickness="0">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Content" Binding="{Binding Content}" Width="*">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Padding" Value="5"/>
+                                        <Setter Property="TextWrapping" Value="Wrap"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="Padding" Value="0,5"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsError}" Value="True">
+                                        <Setter Property="Background" Value="#FFEBEE"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsWarning}" Value="True">
+                                        <Setter Property="Background" Value="#FFFDE7"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                    </DataGrid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Status bar with subtle styling -->
+        <Border Grid.Row="3" Background="#EEEEEE" BorderThickness="0,1,0,0" BorderBrush="#E0E0E0">
+            <StatusBar Name="sbar" Height="26" VerticalAlignment="Stretch" Background="Transparent">
                 <StatusBarItem>
-                    <TextBlock Name="StatusBar"></TextBlock>
+                    <TextBlock Name="StatusBar" Margin="10,0" Foreground="#616161"/>
                 </StatusBarItem>
             </StatusBar>
-        </Grid>
+        </Border>
     </Grid>
 </Window>
