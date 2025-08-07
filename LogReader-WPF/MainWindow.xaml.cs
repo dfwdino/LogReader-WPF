@@ -46,7 +46,11 @@ namespace LogReader_WPF
                 if (isWarning) _WarningNumber++;
             }
 
-            await Dispatcher.InvokeAsync(() => LogFileData.ItemsSource = logEntry);
+            await Dispatcher.InvokeAsync(() =>
+            {
+                LogFileData.ItemsSource = logEntry;
+                RowCoount.Text = LogFileData.Items.Count.ToString();
+            }, System.Windows.Threading.DispatcherPriority.Background);
         }
 
         public MainWindow()
@@ -80,15 +84,19 @@ namespace LogReader_WPF
             await Task.Run(() =>
             {
                 CreateEntrysForGridAsync(filedata);
+                
             });
+            
 
             StatusBar.Text = $"Log file loaded {LogFileLocation.Text}.";
-
             WarningNumber.Text = _WarningNumber.ToString();
             ErrorNumber.Text = _ErrorNumber.ToString();
+            RowCoount.Text = LogFileData.Items.Count.ToString();
 
             _ErrorNumber = 0;
             _WarningNumber = 0;
+
+            
         }
 
         private async Task OpenFileLogAsync(string filelocation)
@@ -112,6 +120,8 @@ namespace LogReader_WPF
             }
 
             await LoadDataGridAsync(LogFileText);
+
+            RowCoount.Text = LogFileData.Items.Count.ToString();
         }
 
         private async Task<List<string>> ReadFileAsync(string filePath)
@@ -296,17 +306,21 @@ namespace LogReader_WPF
                 };
             }
 
+            RowCoount.Text = LogFileData.Items.Count.ToString();
+
         }
 
         private void ClearSearch(object sender, RoutedEventArgs e)
         {
             SearchBox.Text = string.Empty;
             ShowAllRows();
+            RowCoount.Text = LogFileData.Items.Count.ToString();
         }
 
         private void ShowAllRows()
         {
             LogFileData.Items.Filter = null;
+            RowCoount.Text = LogFileData.Items.Count.ToString();
         }
 
         private void HideShowFolderList(object sender, RoutedEventArgs e)
