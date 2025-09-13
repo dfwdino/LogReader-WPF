@@ -8,7 +8,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 
 namespace LogReader_WPF
 {
@@ -84,9 +83,9 @@ namespace LogReader_WPF
             await Task.Run(() =>
             {
                 CreateEntrysForGridAsync(filedata);
-                
+
             });
-            
+
 
             StatusBar.Text = $"Log file loaded {LogFileLocation.Text}.";
             WarningNumber.Text = _WarningNumber.ToString();
@@ -96,7 +95,7 @@ namespace LogReader_WPF
             _ErrorNumber = 0;
             _WarningNumber = 0;
 
-            
+
         }
 
         private async Task OpenFileLogAsync(string filelocation)
@@ -108,7 +107,7 @@ namespace LogReader_WPF
             try
             {
                 LogFileText = await ReadFileAsync(filelocation);
-               
+
                 LogFileLocation.Text = filelocation;
                 AddCheckForHistoryEntry(filelocation, MenuHistory);
                 LoadLogFileFolder(filelocation);
@@ -131,56 +130,6 @@ namespace LogReader_WPF
             return content.Split(["\r\n", "\n"], StringSplitOptions.None).ToList();
         }
 
-        private SolidColorBrush GetRowColor(string data)
-        {
-            //There has to be a better and faster way.
-            foreach (var errorcolor in AppErrorColors.ErrorColors)
-            {
-                if (data.Contains(errorcolor.ErrorName))
-                {
-                    try
-                    {
-                        switch (errorcolor.ErrorName)
-                        {
-                            case "Error":
-                                _ErrorNumber++;
-                                break;
-
-                            case "Warning":
-                                _WarningNumber++;
-                                break;
-
-                            default:
-                                break;
-                        }
-
-                        return new SolidColorBrush(
-                            (Color)ColorConverter.ConvertFromString(errorcolor.ErrorColor)
-                        );
-                    }
-                    catch (Exception ex)
-                    {
-                        return new SolidColorBrush(
-                            (Color)ColorConverter.ConvertFromString("Error")
-                        );
-                    }
-                }
-            }
-
-            if (OddRow)
-            {
-                OddRow = false;
-                return ErrorColors.EvenRowColor;
-            }
-            else
-            {
-                OddRow = true;
-                return ErrorColors.OddRowColor;
-            }
-            //}
-
-            //return ErrorColors.EvenRowColor;
-        }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
@@ -345,6 +294,18 @@ namespace LogReader_WPF
                 ShowHideFileList.Content = "Show ListBox";
 
             }
+        }
+
+        private void ErrorLabel_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            SearchBox.Text = "error";
+            SearchGrid(null, null);
+        }
+
+        private void WarningLabel_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            SearchBox.Text = "warning";
+            SearchGrid(null, null);
         }
     }
 }

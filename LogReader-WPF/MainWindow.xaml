@@ -108,13 +108,13 @@
                 </Border>
                 <Border Background="#FFEBEE" CornerRadius="3" Padding="8,5" Margin="0,0,10,0">
                     <StackPanel Orientation="Horizontal">
-                        <Label Content="Errors:" Tag="Error" Foreground="#D32F2F" FontWeight="SemiBold" Padding="0,0,3,0" VerticalAlignment="Center" MouseDown="SearchGrid" />
+                        <Label Content="Errors:" Tag="Error" Foreground="#D32F2F" FontWeight="SemiBold" Padding="0,0,3,0" VerticalAlignment="Center" MouseDown="SearchGrid" MouseDoubleClick="ErrorLabel_MouseDoubleClick" />
                         <TextBlock Name="ErrorNumber" Text="0" Foreground="#D32F2F" FontWeight="Bold" VerticalAlignment="Center" />
                     </StackPanel>
                 </Border>
                 <Border Background="#FFFDE7" CornerRadius="3" Padding="8,5" Margin="0,0,10,0">
                     <StackPanel Orientation="Horizontal">
-                        <Label Content="Warnings:" Tag="Warning" Foreground="#FFA000" FontWeight="SemiBold" Padding="0,0,3,0" VerticalAlignment="Center" />
+                        <Label Content="Warnings:" Tag="Warning" Foreground="#FFA000" FontWeight="SemiBold" Padding="0,0,3,0" VerticalAlignment="Center" MouseDoubleClick="WarningLabel_MouseDoubleClick" />
                         <TextBlock Name="WarningNumber" Text="0" Foreground="#FFA000" FontWeight="Bold" VerticalAlignment="Center" />
                     </StackPanel>
                 </Border>
