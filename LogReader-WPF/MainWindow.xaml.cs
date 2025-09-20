@@ -1,5 +1,7 @@
-﻿using LogReader_WPF.Model;
+﻿using LogReader_WPF.Extensions;
 using LogReader_WPF.Models;
+using LogReader_WPF.src.Application.Models;
+using LogReader_WPF.src.Domain.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -9,7 +11,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-
 namespace LogReader_WPF
 {
     /// <summary>
@@ -20,8 +21,8 @@ namespace LogReader_WPF
         private int _ErrorNumber = 0;
         private int _WarningNumber = 0;
         private bool OddRow = false;
-        private LogFileErrorColorModel AppErrorColors;
-        private SettingsModel SettingModel;
+        private LogFileErrorColorModel _AppErrorColors;
+        private SettingsModel _SettingModel;
         private string CurrentFolder = string.Empty;
 
 
@@ -75,7 +76,7 @@ namespace LogReader_WPF
                 FileLocation = FIleIO.OpenFileDialog();
                 LogFileData.ItemsSource = null;
                 StatusBar.Text = $"Loading file {LogFileLocation.Text}.";
-                //FIleIO.AddToHistoryFile(FileLocation);
+
 
             }
 
@@ -150,9 +151,11 @@ namespace LogReader_WPF
 
             string AppSettingsJson = File.ReadAllText(jsonpath).ToString();
 
-            SettingModel = JsonConvert.DeserializeObject<SettingsModel>(AppSettingsJson);
+            var fullConfig = JsonConvert.DeserializeObject<dynamic>(AppSettingsJson);
 
-            AppErrorColors = JsonConvert.DeserializeObject<LogFileErrorColorModel>(AppSettingsJson);
+            _SettingModel = JsonConvert.DeserializeObject<SettingsModel>(fullConfig.Settings.ToString());
+
+            _AppErrorColors = JsonConvert.DeserializeObject<LogFileErrorColorModel>(AppSettingsJson);
 
             foreach (string filelocation in FIleIO.GetHistoryFile())
             {
@@ -197,8 +200,6 @@ namespace LogReader_WPF
                 LogFileLocation.Text = selectedLogFile.Tag.ToString();
 
                 AddCheckForHistoryEntry(selectedLogFile.Tag.ToString(), MenuHistory);
-
-                //FIleIO.AddToHistoryFile(LogFileLocation.Text); //Need to move this to close window event. 
 
                 OpenFileLogAsync(selectedLogFile.Tag.ToString());
 
@@ -335,7 +336,7 @@ namespace LogReader_WPF
                 sb.AppendLine(item.ToolTip.ToString());
             }
 
-            FIleIO.AddToHistoryFile(sb.ToString());
+            FIleIO.AddToHistoryFile(sb.RemoveLastNewLine().ToString(), _SettingModel.HistoryFilename);
         }
     }
 }
