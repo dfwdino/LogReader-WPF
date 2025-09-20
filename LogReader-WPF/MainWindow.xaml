@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:LogReader_WPF"
         mc:Ignorable="d"
-        Title="Log Reader" Height="900" Width="1600" Loaded="Window_Loaded"
+        Title="Log Reader" Height="900" Width="1600" Loaded="Window_Loaded" Closed="Window_Closed"
         Background="#F5F5F5">
     <Window.Resources>
         <!-- Modern button style -->
@@ -77,7 +77,7 @@
                         </Style>
                     </MenuItem.ItemContainerStyle>
                 </MenuItem>
-                <MenuItem Header="_Help" Foreground="White">
+                <MenuItem Header="_Help" Foreground="Black">
                     <MenuItem Header="_About" Click="OpenAbout" />
                 </MenuItem>
             </Menu>

@@ -6,8 +6,8 @@
     <RootNamespace>LogReader_WPF</RootNamespace>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
-    <AssemblyVersion>1.24.04.26</AssemblyVersion>
-    <FileVersion>1.24.04.26</FileVersion>
+    <AssemblyVersion>1.25.09.20</AssemblyVersion>
+    <FileVersion>1.25.09.20</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

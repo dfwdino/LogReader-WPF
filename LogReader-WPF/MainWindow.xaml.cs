@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -31,12 +32,14 @@ namespace LogReader_WPF
 
             foreach (var item in logfile)
             {
-                bool isError = FlagWords.ErrorWords.Any(word => item.Contains(word, StringComparison.OrdinalIgnoreCase));
-                bool isWarning = FlagWords.WarningWords.Any(word => item.Contains(word, StringComparison.OrdinalIgnoreCase));
+                var cleareditem = item.Replace("\0", "");
+
+                bool isError = FlagWords.ErrorWords.Any(word => cleareditem.Contains(word, StringComparison.OrdinalIgnoreCase));
+                bool isWarning = FlagWords.WarningWords.Any(word => cleareditem.Contains(word, StringComparison.OrdinalIgnoreCase));
 
                 logEntry.Add(new LogEntry
                 {
-                    Content = item,
+                    Content = cleareditem,
                     IsError = isError,
                     IsWarning = isWarning
                 });
@@ -61,15 +64,19 @@ namespace LogReader_WPF
         {
             string FileLocation = string.Empty;
 
+
             if (sender is MenuItem historyitem)
             {
                 FileLocation = historyitem.ToolTip.ToString();
+
             }
             else
             {
                 FileLocation = FIleIO.OpenFileDialog();
                 LogFileData.ItemsSource = null;
                 StatusBar.Text = $"Loading file {LogFileLocation.Text}.";
+                //FIleIO.AddToHistoryFile(FileLocation);
+
             }
 
             LogFileLocation.Text = FileLocation;
@@ -147,6 +154,12 @@ namespace LogReader_WPF
 
             AppErrorColors = JsonConvert.DeserializeObject<LogFileErrorColorModel>(AppSettingsJson);
 
+            foreach (string filelocation in FIleIO.GetHistoryFile())
+            {
+                AddCheckForHistoryEntry(filelocation, MenuHistory);
+            }
+
+
 
         }
 
@@ -185,7 +198,11 @@ namespace LogReader_WPF
 
                 AddCheckForHistoryEntry(selectedLogFile.Tag.ToString(), MenuHistory);
 
+                //FIleIO.AddToHistoryFile(LogFileLocation.Text); //Need to move this to close window event. 
+
                 OpenFileLogAsync(selectedLogFile.Tag.ToString());
+
+
             }
 
         }
@@ -227,7 +244,7 @@ namespace LogReader_WPF
                 MenuItem menuItem = new MenuItem();
 
                 menuItem.Header = filename;
-                menuItem.ToolTip = LogFileLocation.Text;
+                menuItem.ToolTip = HistoryEntry; //LogFileLocation.Text;
 
                 HistoryMenu.Items.Add(menuItem);
             }
@@ -306,6 +323,19 @@ namespace LogReader_WPF
         {
             SearchBox.Text = "warning";
             SearchGrid(null, null);
+        }
+
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            //Need to loop thur the history and save it to file.
+            StringBuilder sb = new StringBuilder();
+
+            foreach (MenuItem item in MenuHistory.Items)
+            {
+                sb.AppendLine(item.ToolTip.ToString());
+            }
+
+            FIleIO.AddToHistoryFile(sb.ToString());
         }
     }
 }
