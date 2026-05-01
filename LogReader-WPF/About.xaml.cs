@@ -28,7 +28,7 @@ namespace LogReader_WPF
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            VersionNumber.Text = RandomHelpers.GetCurrentVerion().ToString();
+            VersionNumber.Text = RandomHelpers.GetCurrentVerion()?.ToString() ?? "Unknown";
         }
 
         private void Close_Clicked(object sender, RoutedEventArgs e)

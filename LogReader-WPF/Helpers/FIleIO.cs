@@ -1,73 +1,65 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 
 namespace LogReader_WPF
 {
-    internal class FIleIO
+    internal class FileIO
     {
         public static string OpenFileDialog()
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
-
             return openFileDialog.ShowDialog() == true ? openFileDialog.FileName : string.Empty;
         }
 
-        public static void AddToHistoryFile(string filepaths, string historyfilename)
+        public static void AddToHistoryFile(IEnumerable<string> paths, string historyFilename)
         {
             try
             {
                 string appdata = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                string projectName = Assembly.GetExecutingAssembly().GetName().Name;
+                string projectName = Assembly.GetExecutingAssembly().GetName().Name ?? "LogReader-WPF";
+                string folder = Path.Combine(appdata, projectName);
 
-                string folder = System.IO.Path.Combine(appdata, projectName);
+                if (!Directory.Exists(folder))
+                    Directory.CreateDirectory(folder);
 
-                if (!System.IO.Directory.Exists(folder))
-                {
-                    System.IO.Directory.CreateDirectory(folder);
-                }
-                var historyfile = System.IO.Path.Combine(folder, historyfilename);
+                string historyFile = Path.Combine(folder, historyFilename);
 
-                List<string> historylist = new();
-
-                if (!historylist.Contains(filepaths))
-                {
-                    historylist.Add(filepaths);
-
-                    System.IO.File.WriteAllLines(historyfile, historylist.Distinct().TakeLast(10));
-                }
+                File.WriteAllLines(historyFile, paths.Distinct().TakeLast(10));
             }
             catch
             {
-                // Do nothing
+                // Could not save history — non-critical
             }
         }
 
-        public static List<string> GetHistoryFile()
+        public static List<string> GetHistoryFile(string historyFilename = "History.txt")
         {
             try
             {
-                var appdata = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                var folder = System.IO.Path.Combine(appdata, "LogReader-WPF");
-                if (!System.IO.Directory.Exists(folder))
-                {
-                    System.IO.Directory.CreateDirectory(folder);
-                }
-                var historyfile = System.IO.Path.Combine(folder, "history.txt");
-                List<string> historylist = new();
-                if (System.IO.File.Exists(historyfile))
-                {
-                    historylist = System.IO.File.ReadAllLines(historyfile).ToList();
-                }
-                return historylist;
+                string appdata = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                string projectName = Assembly.GetExecutingAssembly().GetName().Name ?? "LogReader-WPF";
+                string folder = Path.Combine(appdata, projectName);
+
+                if (!Directory.Exists(folder))
+                    Directory.CreateDirectory(folder);
+
+                string historyFile = Path.Combine(folder, historyFilename);
+
+                if (!File.Exists(historyFile))
+                    return new List<string>();
+
+                return File.ReadAllLines(historyFile)
+                    .Where(line => !string.IsNullOrWhiteSpace(line))
+                    .ToList();
             }
             catch
             {
                 return new List<string>();
             }
         }
-
     }
 }

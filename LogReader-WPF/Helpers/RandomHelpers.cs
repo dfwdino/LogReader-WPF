@@ -9,6 +9,6 @@ namespace LogReader_WPF
 {
     internal class RandomHelpers
     {
-        public static Version GetCurrentVerion() => Assembly.GetEntryAssembly().GetName().Version;
+        public static Version? GetCurrentVerion() => Assembly.GetEntryAssembly()?.GetName().Version;
     }
 }

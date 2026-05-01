@@ -1,4 +1,3 @@
-﻿using LogReader_WPF.Extensions;
 using LogReader_WPF.Models;
 using LogReader_WPF.src.Application.Models;
 using LogReader_WPF.src.Domain.Models;
@@ -11,124 +10,102 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+
 namespace LogReader_WPF
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
-        private int _ErrorNumber = 0;
-        private int _WarningNumber = 0;
-        private bool OddRow = false;
-        private LogFileErrorColorModel _AppErrorColors;
-        private SettingsModel _SettingModel;
-        private string CurrentFolder = string.Empty;
-
-
-
-        private async Task CreateEntrysForGridAsync(List<string> logfile)
-        {
-            List<LogEntry> logEntry = new();
-
-            foreach (var item in logfile)
-            {
-                var cleareditem = item.Replace("\0", "");
-
-                bool isError = FlagWords.ErrorWords.Any(word => cleareditem.Contains(word, StringComparison.OrdinalIgnoreCase));
-                bool isWarning = FlagWords.WarningWords.Any(word => cleareditem.Contains(word, StringComparison.OrdinalIgnoreCase));
-
-                logEntry.Add(new LogEntry
-                {
-                    Content = cleareditem,
-                    IsError = isError,
-                    IsWarning = isWarning
-                });
-
-                if (isError) _ErrorNumber++;
-                if (isWarning) _WarningNumber++;
-            }
-
-            await Dispatcher.InvokeAsync(() =>
-            {
-                LogFileData.ItemsSource = logEntry;
-                RowCoount.Text = LogFileData.Items.Count.ToString();
-            }, System.Windows.Threading.DispatcherPriority.Background);
-        }
+        private int _errorNumber = 0;
+        private int _warningNumber = 0;
+        private int _totalRowCount = 0;
+        private LogFileErrorColorModel? _appErrorColors;
+        private SettingsModel? _settingModel;
+        private string _currentFolder = string.Empty;
 
         public MainWindow()
         {
             InitializeComponent();
         }
 
-        private async void OpenLogFile_Click(object sender, RoutedEventArgs e)
+        // Processes log lines on a background thread, then updates the grid on the UI thread.
+        private async Task CreateEntriesForGridAsync(List<string> logfile)
         {
-            string FileLocation = string.Empty;
+            List<LogEntry> logEntry = new();
+            int errorCount = 0;
+            int warningCount = 0;
 
-
-            if (sender is MenuItem historyitem)
+            await Task.Run(() =>
             {
-                FileLocation = historyitem.ToolTip.ToString();
+                foreach (var item in logfile)
+                {
+                    var clearedItem = item.Replace("\0", "");
 
-            }
-            else
-            {
-                FileLocation = FIleIO.OpenFileDialog();
-                LogFileData.ItemsSource = null;
-                StatusBar.Text = $"Loading file {LogFileLocation.Text}.";
+                    bool isError = FlagWords.ErrorWords.Any(word => clearedItem.Contains(word, StringComparison.OrdinalIgnoreCase));
+                    bool isWarning = FlagWords.WarningWords.Any(word => clearedItem.Contains(word, StringComparison.OrdinalIgnoreCase));
 
+                    logEntry.Add(new LogEntry
+                    {
+                        Content = clearedItem,
+                        IsError = isError,
+                        IsWarning = isWarning
+                    });
 
-            }
+                    if (isError) errorCount++;
+                    if (isWarning) warningCount++;
+                }
+            });
 
-            LogFileLocation.Text = FileLocation;
-            await OpenFileLogAsync(FileLocation);
+            _errorNumber = errorCount;
+            _warningNumber = warningCount;
+
+            LogFileData.ItemsSource = logEntry;
+            _totalRowCount = LogFileData.Items.Count;
+            RowCount.Text = _totalRowCount.ToString("N0");
         }
 
         private async Task LoadDataGridAsync(List<string> filedata)
         {
             LogFileData.ItemsSource = null;
+            StatusBar.Text = $"Loading {Path.GetFileName(LogFileLocation.Text)}...";
+            Cursor = Cursors.Wait;
 
-            await Task.Run(() =>
+            try
             {
-                CreateEntrysForGridAsync(filedata);
+                await CreateEntriesForGridAsync(filedata);
 
-            });
-
-
-            StatusBar.Text = $"Log file loaded {LogFileLocation.Text}.";
-            WarningNumber.Text = _WarningNumber.ToString();
-            ErrorNumber.Text = _ErrorNumber.ToString();
-            RowCoount.Text = LogFileData.Items.Count.ToString();
-
-            _ErrorNumber = 0;
-            _WarningNumber = 0;
-
-
+                WarningNumber.Text = _warningNumber.ToString("N0");
+                ErrorNumber.Text = _errorNumber.ToString("N0");
+                RowCount.Text = _totalRowCount.ToString("N0");
+                StatusBar.Text = $"Loaded: {LogFileLocation.Text}  |  {_totalRowCount:N0} rows  |  {_errorNumber:N0} errors  |  {_warningNumber:N0} warnings";
+            }
+            finally
+            {
+                Cursor = Cursors.Arrow;
+            }
         }
 
         private async Task OpenFileLogAsync(string filelocation)
         {
             if (string.IsNullOrWhiteSpace(filelocation)) return;
 
-            List<string> LogFileText = new();
+            List<string> logFileText;
 
             try
             {
-                LogFileText = await ReadFileAsync(filelocation);
-
+                logFileText = await ReadFileAsync(filelocation);
                 LogFileLocation.Text = filelocation;
-                AddCheckForHistoryEntry(filelocation, MenuHistory);
+                AddHistoryEntry(filelocation);
                 LoadLogFileFolder(filelocation);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error: {ex.Message}");
+                MessageBox.Show($"Could not open file:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                StatusBar.Text = "Failed to load file.";
                 return;
             }
 
-            await LoadDataGridAsync(LogFileText);
-
-            RowCoount.Text = LogFileData.Items.Count.ToString();
+            await LoadDataGridAsync(logFileText);
         }
 
         private async Task<List<string>> ReadFileAsync(string filePath)
@@ -138,205 +115,264 @@ namespace LogReader_WPF
             return content.Split(["\r\n", "\n"], StringSplitOptions.None).ToList();
         }
 
-
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            this.Title = $"The Log - {RandomHelpers.GetCurrentVerion().ToString()}";
+            this.Title = $"The Log - {RandomHelpers.GetCurrentVerion()}";
 
-            string jsonpath = System.IO.Path.Combine(
-                Directory.GetCurrentDirectory(),
-                "AppSettings",
-                "AppSettings.json"
-            );
+            string jsonpath = Path.Combine(Directory.GetCurrentDirectory(), "AppSettings", "AppSettings.json");
+            string appSettingsJson = File.ReadAllText(jsonpath);
+            var fullConfig = JsonConvert.DeserializeObject<dynamic>(appSettingsJson);
 
-            string AppSettingsJson = File.ReadAllText(jsonpath).ToString();
+            _settingModel = JsonConvert.DeserializeObject<SettingsModel>(fullConfig?.Settings?.ToString() ?? "{}");
+            _appErrorColors = JsonConvert.DeserializeObject<LogFileErrorColorModel>(appSettingsJson);
 
-            var fullConfig = JsonConvert.DeserializeObject<dynamic>(AppSettingsJson);
+            if (_settingModel?.FontSize > 0)
+                LogFileData.FontSize = _settingModel.FontSize;
 
-            _SettingModel = JsonConvert.DeserializeObject<SettingsModel>(fullConfig.Settings.ToString());
-
-            _AppErrorColors = JsonConvert.DeserializeObject<LogFileErrorColorModel>(AppSettingsJson);
-
-            foreach (string filelocation in FIleIO.GetHistoryFile())
+            foreach (string filelocation in FileIO.GetHistoryFile(_settingModel?.HistoryFilename ?? "History.txt"))
             {
-                AddCheckForHistoryEntry(filelocation, MenuHistory);
+                if (!string.IsNullOrWhiteSpace(filelocation))
+                    AddHistoryEntry(filelocation);
             }
-
-
-
         }
-
-
 
         private void LoadLogFileFolder(string path)
         {
-            string? currentfiledir = Path.GetDirectoryName(path);
+            string? currentFileDir = Path.GetDirectoryName(path);
+            if (currentFileDir == null || _currentFolder.Equals(currentFileDir))
+                return;
 
-            if (currentfiledir != null && !CurrentFolder.Equals(currentfiledir))
+            FileList.ItemsSource = null;
+            _currentFolder = currentFileDir;
+
+            foreach (var file in Directory.GetFiles(currentFileDir))
             {
-                FileList.ItemsSource = null;
-                CurrentFolder = currentfiledir;
-                foreach (var item in Directory.GetFiles(currentfiledir))
+                FileList.Items.Add(new ListBoxItem
                 {
-                    ListBoxItem listBoxItem = new ListBoxItem();
-
-                    listBoxItem.Tag = item;
-                    listBoxItem.Content = Path.GetFileName(item);
-
-                    FileList.Items.Add(listBoxItem);
-                }
+                    Tag = file,
+                    Content = Path.GetFileName(file)
+                });
             }
         }
 
-
-        private void LoadLogFile(object sender, SelectionChangedEventArgs e)
+        private async void LoadLogFile(object sender, SelectionChangedEventArgs e)
         {
+            var selectedLogFile = FileList.SelectedItem as ListBoxItem;
+            if (selectedLogFile == null) return;
 
-            if (((ListBox)sender).Items.Count > 0)//BAD code?????
-            {
+            string filePath = selectedLogFile.Tag?.ToString() ?? string.Empty;
+            if (string.IsNullOrEmpty(filePath)) return;
 
-                var selectedLogFile = (ListBoxItem)FileList.SelectedItem;
-
-                LogFileLocation.Text = selectedLogFile.Tag.ToString();
-
-                AddCheckForHistoryEntry(selectedLogFile.Tag.ToString(), MenuHistory);
-
-                OpenFileLogAsync(selectedLogFile.Tag.ToString());
-
-
-            }
-
+            LogFileLocation.Text = filePath;
+            await OpenFileLogAsync(filePath);
         }
-
 
         private void DataGridFile_Drop(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
-            {
-                // Note that you can have more than one file.
-                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+            if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
 
-                string FileLocation = files[0];
+            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+            if (files.Length == 0) return;
 
-                LogFileLocation.Text = FileLocation;
+            if (files.Length > 1)
+                StatusBar.Text = $"Multiple files dropped — loading first file ({files.Length - 1} others ignored).";
 
-                AddCheckForHistoryEntry(FileLocation, MenuHistory);
-
-                OpenFileLogAsync(FileLocation);
-            }
+            string fileLocation = files[0];
+            LogFileLocation.Text = fileLocation;
+            _ = OpenFileLogAsync(fileLocation);
         }
 
-        private void AddCheckForHistoryEntry(string HistoryEntry, MenuItem HistoryMenu)
+        // Adds a file path to the History menu. Most-recently-opened appears at the top.
+        private void AddHistoryEntry(string filePath)
         {
-            bool FoundHistory = false;
-            string filename = System.IO.Path.GetFileNameWithoutExtension(HistoryEntry);
+            if (string.IsNullOrEmpty(filePath)) return;
 
-            foreach (MenuItem item in MenuHistory.Items)
+            bool alreadyExists = MenuHistory.Items
+                .OfType<MenuItem>()
+                .Any(item => item.ToolTip?.ToString() == filePath);
+
+            if (alreadyExists) return;
+
+            MenuItem menuItem = new MenuItem
             {
-                if (item.Header.ToString() == filename)
-                {
-                    FoundHistory = true;
-                    break;
-                }
+                Header = Path.GetFileNameWithoutExtension(filePath),
+                ToolTip = filePath,
+                Style = (Style)FindResource("SubMenuItem")
+            };
+            menuItem.Click += OpenLogFile_Click;
+
+            // Insert at top so most recent appears first; separator + Clear History stay at bottom
+            MenuHistory.Items.Insert(0, menuItem);
+        }
+
+        private async void OpenLogFile_Click(object sender, RoutedEventArgs e)
+        {
+            string fileLocation = string.Empty;
+
+            if (sender is MenuItem historyItem)
+            {
+                fileLocation = historyItem.ToolTip?.ToString() ?? string.Empty;
+            }
+            else
+            {
+                fileLocation = FileIO.OpenFileDialog();
             }
 
-            if (FoundHistory.Equals(false))
+            if (string.IsNullOrEmpty(fileLocation)) return;
+
+            LogFileLocation.Text = fileLocation;
+            await OpenFileLogAsync(fileLocation);
+        }
+
+        private void ClearHistory_Click(object sender, RoutedEventArgs e)
+        {
+            for (int i = MenuHistory.Items.Count - 1; i >= 0; i--)
             {
-                MenuItem menuItem = new MenuItem();
-
-                menuItem.Header = filename;
-                menuItem.ToolTip = HistoryEntry; //LogFileLocation.Text;
-
-                HistoryMenu.Items.Add(menuItem);
+                var item = MenuHistory.Items[i];
+                if (item is Separator || (item is MenuItem mi && mi.Tag?.ToString() == "ClearHistory"))
+                    continue;
+                MenuHistory.Items.RemoveAt(i);
             }
+            StatusBar.Text = "History cleared.";
         }
 
         private void OpenAbout(object sender, RoutedEventArgs e)
         {
-            About about = new About();
-            about.Owner = this;
-            var resutls = about.ShowDialog();
+            About about = new About { Owner = this };
+            about.ShowDialog();
         }
 
-        private async void SearchGrid(object sender, RoutedEventArgs e)
+        private void SearchGrid(object? sender, RoutedEventArgs? e)
         {
             ShowAllRows();
 
-            string valuetext = SearchBox.Text;
+            string searchText = SearchBox.Text;
 
-            if (!string.IsNullOrEmpty(valuetext))
+            if (!string.IsNullOrEmpty(searchText))
             {
                 LogFileData.Items.Filter = item =>
                 {
                     var logEntry = item as LogEntry;
-                    return logEntry != null && logEntry.Content.Contains(valuetext, StringComparison.OrdinalIgnoreCase);
+                    return logEntry != null && logEntry.Content.Contains(searchText, StringComparison.OrdinalIgnoreCase);
                 };
+
+                int filteredCount = LogFileData.Items.Count;
+                RowCount.Text = $"{filteredCount:N0} / {_totalRowCount:N0}";
+                StatusBar.Text = $"Filter \"{searchText}\": {filteredCount:N0} of {_totalRowCount:N0} rows match.";
             }
-
-            RowCoount.Text = LogFileData.Items.Count.ToString();
-
         }
 
-        private void ClearSearch(object sender, RoutedEventArgs e)
+        private void ClearSearch(object? sender, RoutedEventArgs? e)
         {
             SearchBox.Text = string.Empty;
             ShowAllRows();
-            RowCoount.Text = LogFileData.Items.Count.ToString();
+            StatusBar.Text = string.Empty;
         }
 
         private void ShowAllRows()
         {
             LogFileData.Items.Filter = null;
-            RowCoount.Text = LogFileData.Items.Count.ToString();
+            RowCount.Text = _totalRowCount.ToString("N0");
+        }
+
+        private void SearchBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                e.Handled = true;
+                SearchGrid(sender, null);
+            }
+            else if (e.Key == Key.Escape)
+            {
+                e.Handled = true;
+                ClearSearch(sender, null);
+            }
+        }
+
+        private async void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (Keyboard.Modifiers != ModifierKeys.Control) return;
+
+            if (e.Key == Key.O)
+            {
+                e.Handled = true;
+                string fileLocation = FileIO.OpenFileDialog();
+                if (!string.IsNullOrEmpty(fileLocation))
+                {
+                    LogFileLocation.Text = fileLocation;
+                    await OpenFileLogAsync(fileLocation);
+                }
+            }
+            else if (e.Key == Key.F)
+            {
+                e.Handled = true;
+                SearchBox.Focus();
+                SearchBox.SelectAll();
+            }
         }
 
         private void HideShowFolderList(object sender, RoutedEventArgs e)
         {
-            double adsf = FileList.Width;
+            var fileListColumn = FileListGrid.ColumnDefinitions[0];
 
-
-
-            if (FileList.Visibility == Visibility.Collapsed)
+            if (FileListPanel.Visibility == Visibility.Collapsed)
             {
-                FileList.Visibility = Visibility.Visible;
-                FileListGrid.Visibility = Visibility.Visible;
-
-                ShowHideFileList.Content = "Hide ListBox";
-
+                FileListPanel.Visibility = Visibility.Visible;
+                FileListSplitter.Visibility = Visibility.Visible;
+                fileListColumn.MinWidth = 250;
+                fileListColumn.Width = GridLength.Auto;
+                ShowHideFileList.Content = "Hide File List";
             }
             else
             {
-                FileList.Visibility = Visibility.Collapsed;
-                FileListGrid.Visibility = Visibility.Collapsed;
-                LogFileData.VerticalAlignment = VerticalAlignment.Stretch;
-                ShowHideFileList.Content = "Show ListBox";
-
+                FileListPanel.Visibility = Visibility.Collapsed;
+                FileListSplitter.Visibility = Visibility.Collapsed;
+                fileListColumn.MinWidth = 0;
+                fileListColumn.Width = new GridLength(0);
+                ShowHideFileList.Content = "Show File List";
             }
         }
 
-        private void ErrorLabel_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private void ErrorLabel_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             SearchBox.Text = "error";
             SearchGrid(null, null);
         }
 
-        private void WarningLabel_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private void WarningLabel_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             SearchBox.Text = "warning";
             SearchGrid(null, null);
         }
 
+        private void CopyRowContent_Click(object sender, RoutedEventArgs e)
+        {
+            if (LogFileData.SelectedItem is LogEntry entry)
+                Clipboard.SetText(entry.Content);
+        }
+
+        private void CopyAllContent_Click(object sender, RoutedEventArgs e)
+        {
+            var sb = new StringBuilder();
+            foreach (var item in LogFileData.Items)
+            {
+                if (item is LogEntry entry)
+                    sb.AppendLine(entry.Content);
+            }
+            if (sb.Length > 0)
+                Clipboard.SetText(sb.ToString());
+        }
+
         private void Window_Closed(object sender, EventArgs e)
         {
-            //Need to loop thur the history and save it to file.
-            StringBuilder sb = new StringBuilder();
+            var paths = MenuHistory.Items
+                .OfType<MenuItem>()
+                .Where(item => item.ToolTip != null && item.Tag?.ToString() != "ClearHistory")
+                .Select(item => item.ToolTip.ToString() ?? string.Empty)
+                .Where(p => !string.IsNullOrEmpty(p))
+                .ToList();
 
-            foreach (MenuItem item in MenuHistory.Items)
-            {
-                sb.AppendLine(item.ToolTip.ToString());
-            }
-
-            FIleIO.AddToHistoryFile(sb.RemoveLastNewLine().ToString(), _SettingModel.HistoryFilename);
+            FileIO.AddToHistoryFile(paths, _settingModel?.HistoryFilename ?? "History.txt");
         }
     }
 }
