@@ -1,9 +1,8 @@
-﻿namespace LogReader_WPF
+namespace LogReader_WPF
 {
-    public struct FlagWords
+    internal static class FlagWords
     {
-        public static string[] ErrorWords = { "Error" };
-
-        public static string[] WarningWords = { "Warning" };
+        public static readonly string[] ErrorWords = { "Error" };
+        public static readonly string[] WarningWords = { "Warning" };
     }
 }

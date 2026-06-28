@@ -1,5 +1,4 @@
 using LogReader_WPF.Models;
-using LogReader_WPF.src.Application.Models;
 using LogReader_WPF.src.Domain.Models;
 using Newtonsoft.Json;
 using System;
@@ -19,7 +18,6 @@ namespace LogReader_WPF
         private int _errorNumber = 0;
         private int _warningNumber = 0;
         private int _totalRowCount = 0;
-        private LogFileErrorColorModel? _appErrorColors;
         private SettingsModel? _settingModel;
         private string _currentFolder = string.Empty;
 
@@ -110,21 +108,21 @@ namespace LogReader_WPF
 
         private async Task<List<string>> ReadFileAsync(string filePath)
         {
-            using var reader = new StreamReader(filePath);
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var reader = new StreamReader(stream);
             var content = await reader.ReadToEndAsync();
             return content.Split(["\r\n", "\n"], StringSplitOptions.None).ToList();
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
             this.Title = $"The Log - {RandomHelpers.GetCurrentVerion()}";
 
             string jsonpath = Path.Combine(Directory.GetCurrentDirectory(), "AppSettings", "AppSettings.json");
-            string appSettingsJson = File.ReadAllText(jsonpath);
+            string appSettingsJson = await File.ReadAllTextAsync(jsonpath);
             var fullConfig = JsonConvert.DeserializeObject<dynamic>(appSettingsJson);
 
             _settingModel = JsonConvert.DeserializeObject<SettingsModel>(fullConfig?.Settings?.ToString() ?? "{}");
-            _appErrorColors = JsonConvert.DeserializeObject<LogFileErrorColorModel>(appSettingsJson);
 
             if (_settingModel?.FontSize > 0)
                 LogFileData.FontSize = _settingModel.FontSize;
@@ -142,7 +140,7 @@ namespace LogReader_WPF
             if (currentFileDir == null || _currentFolder.Equals(currentFileDir))
                 return;
 
-            FileList.ItemsSource = null;
+            FileList.Items.Clear();
             _currentFolder = currentFileDir;
 
             foreach (var file in Directory.GetFiles(currentFileDir))
@@ -291,6 +289,14 @@ namespace LogReader_WPF
 
         private async void Window_KeyDown(object sender, KeyEventArgs e)
         {
+            if (e.Key == Key.F5)
+            {
+                e.Handled = true;
+                if (!string.IsNullOrEmpty(LogFileLocation.Text))
+                    await OpenFileLogAsync(LogFileLocation.Text);
+                return;
+            }
+
             if (Keyboard.Modifiers != ModifierKeys.Control) return;
 
             if (e.Key == Key.O)
@@ -309,6 +315,12 @@ namespace LogReader_WPF
                 SearchBox.Focus();
                 SearchBox.SelectAll();
             }
+        }
+
+        private async void ReloadLogFile_Click(object sender, RoutedEventArgs e)
+        {
+            if (!string.IsNullOrEmpty(LogFileLocation.Text))
+                await OpenFileLogAsync(LogFileLocation.Text);
         }
 
         private void HideShowFolderList(object sender, RoutedEventArgs e)
@@ -333,16 +345,22 @@ namespace LogReader_WPF
             }
         }
 
-        private void ErrorLabel_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private void ErrorBadge_Click(object sender, MouseButtonEventArgs e)
         {
-            SearchBox.Text = "error";
-            SearchGrid(null, null);
+            SearchBox.Text = string.Empty;
+            LogFileData.Items.Filter = item => item is LogEntry entry && entry.IsError;
+            int filteredCount = LogFileData.Items.Count;
+            RowCount.Text = $"{filteredCount:N0} / {_totalRowCount:N0}";
+            StatusBar.Text = $"Showing errors: {filteredCount:N0} of {_totalRowCount:N0} rows.";
         }
 
-        private void WarningLabel_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private void WarningBadge_Click(object sender, MouseButtonEventArgs e)
         {
-            SearchBox.Text = "warning";
-            SearchGrid(null, null);
+            SearchBox.Text = string.Empty;
+            LogFileData.Items.Filter = item => item is LogEntry entry && entry.IsWarning;
+            int filteredCount = LogFileData.Items.Count;
+            RowCount.Text = $"{filteredCount:N0} / {_totalRowCount:N0}";
+            StatusBar.Text = $"Showing warnings: {filteredCount:N0} of {_totalRowCount:N0} rows.";
         }
 
         private void CopyRowContent_Click(object sender, RoutedEventArgs e)

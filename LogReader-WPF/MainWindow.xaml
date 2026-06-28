@@ -143,6 +143,8 @@
                          IsReadOnly="True" Cursor="Arrow" ToolTip="Path of the currently loaded log file"/>
                 <Button Content="Open Log" Style="{StaticResource ModernButton}" Click="OpenLogFile_Click" Width="66"
                         ToolTip="Open a log file (Ctrl+O)"/>
+                <Button Content="Reload" Style="{StaticResource ModernButton}" Click="ReloadLogFile_Click" Width="55" Margin="5,0,0,0"
+                        ToolTip="Reload the current file (F5)"/>
             </StackPanel>
 
             <!-- Statistics group -->
@@ -154,19 +156,17 @@
                                    ToolTip="Visible rows / total rows (filtered / total when a search is active)"/>
                     </StackPanel>
                 </Border>
-                <Border Background="#FFEBEE" CornerRadius="3" Padding="8,5" Margin="0,0,10,0">
+                <Border Background="#FFEBEE" CornerRadius="3" Padding="8,5" Margin="0,0,10,0"
+                        Cursor="Hand" ToolTip="Click to filter for errors" PreviewMouseLeftButtonDown="ErrorBadge_Click">
                     <StackPanel Orientation="Horizontal">
-                        <Label Content="Errors:" Tag="Error" Foreground="#D32F2F" FontWeight="SemiBold" Padding="0,0,3,0"
-                               VerticalAlignment="Center" MouseDoubleClick="ErrorLabel_MouseDoubleClick"
-                               Cursor="Hand" ToolTip="Double-click to filter for errors"/>
+                        <Label Content="Errors:" Foreground="#D32F2F" FontWeight="SemiBold" Padding="0,0,3,0" VerticalAlignment="Center"/>
                         <TextBlock Name="ErrorNumber" Text="0" Foreground="#D32F2F" FontWeight="Bold" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Border>
-                <Border Background="#FFFDE7" CornerRadius="3" Padding="8,5" Margin="0,0,10,0">
+                <Border Background="#FFFDE7" CornerRadius="3" Padding="8,5" Margin="0,0,10,0"
+                        Cursor="Hand" ToolTip="Click to filter for warnings" PreviewMouseLeftButtonDown="WarningBadge_Click">
                     <StackPanel Orientation="Horizontal">
-                        <Label Content="Warnings:" Tag="Warning" Foreground="#FFA000" FontWeight="SemiBold" Padding="0,0,3,0"
-                               VerticalAlignment="Center" MouseDoubleClick="WarningLabel_MouseDoubleClick"
-                               Cursor="Hand" ToolTip="Double-click to filter for warnings"/>
+                        <Label Content="Warnings:" Foreground="#FFA000" FontWeight="SemiBold" Padding="0,0,3,0" VerticalAlignment="Center"/>
                         <TextBlock Name="WarningNumber" Text="0" Foreground="#FFA000" FontWeight="Bold" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Border>
@@ -275,11 +275,11 @@
                             <Style TargetType="DataGridRow">
                                 <Setter Property="Padding" Value="0,5"/>
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsError}" Value="True">
-                                        <Setter Property="Background" Value="LightPink"/>
-                                    </DataTrigger>
                                     <DataTrigger Binding="{Binding IsWarning}" Value="True">
                                         <Setter Property="Background" Value="#FFFDE7"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsError}" Value="True">
+                                        <Setter Property="Background" Value="LightPink"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
